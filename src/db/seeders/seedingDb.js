@@ -1,11 +1,12 @@
-const db = require('../db');
+const db = require("../db");
+const bcrypt = require("bcrypt");
 
 async function initializeTables() {
   const checkTableQuery = `
-  SELECT * from information_schema.tables
-  WHERE table_schema = '${process.env.DB_Name}'
-  AND table_name = 'users'
-  LIMIT 1;
+    SELECT * FROM information_schema.tables
+    WHERE table_schema = '${process.env.DB_NAME}'
+    AND table_name = 'users'
+    LIMIT 1;
   `;
 
   const createNewTableQuery = [
@@ -45,16 +46,52 @@ async function initializeTables() {
             console.error(`Error creating table:`);
             return reject(err);
           }
-
           resolve();
         });
       });
     }
 
-    console.log('Database is ready');
+    console.log("Database is ready");
+    // Hapus atau komentari baris ini untuk mencegah penambahan data otomatis
+    // await seedDatabase(); // Memanggil fungsi seedDatabase setelah tabel diinisialisasi
   } catch (error) {
     console.log(error);
   }
 }
 
-module.exports = { initializeTables };
+// Fungsi untuk menambah data pengguna (dapat dijalankan secara manual jika diperlukan)
+async function seedDatabase() {
+  const userData = {
+    uuid: "1",
+    username: "selta",
+    email: "seltajaya.16@gmail.com",
+    password: "selta1221", // Pastikan untuk menghash password sebelum menyimpan
+    role: "admin",
+    id_history: "1",
+  };
+
+  try {
+    // Hash password sebelum menyimpannya
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+    // Menyisipkan data ke tabel users
+    const result = await db.promise().query(
+      `INSERT INTO users (uuid, username, email, password, role, id_history) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        userData.uuid,
+        userData.username,
+        userData.email,
+        hashedPassword,
+        userData.role,
+        userData.id_history,
+      ]
+    );
+
+    console.log("User inserted with ID:", result[0].insertId);
+  } catch (error) {
+    console.error("Error seeding database:", error);
+  }
+}
+
+module.exports = { initializeTables, seedDatabase };
