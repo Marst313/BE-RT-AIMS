@@ -1,15 +1,16 @@
-const bcrypt = require('bcrypt');
-const { generateUuid } = require('../utils/uuid');
-const { hashPassword } = require('../utils/bcrypt');
-const User = require('../models/users');
+const bcrypt = require("bcrypt");
+const { generateUuid } = require("../utils/uuid");
+const { hashPassword } = require("../utils/bcrypt");
+const User = require("../models/users");
+const { err } = require("../utils/customError");
 
 async function SignUp(req, res) {
   const { uuid, username, email, password, role } = req.body;
 
   if (!username || !email || !password || !role) {
     return res.status(400).json({
-      status: 'error',
-      message: 'All fields are required',
+      status: "error",
+      message: "All fields are required",
     });
   }
 
@@ -24,14 +25,14 @@ async function SignUp(req, res) {
     req.password = undefined;
 
     res.status(201).json({
-      status: 'success',
-      message: 'User created successfully',
+      status: "success",
+      message: "User created successfully",
     });
   } catch (error) {
-    console.error('Error during user creation:', error);
+    console.error("Error during user creation:", error);
     res.status(500).json({
-      status: 'error',
-      message: 'Internal server error',
+      status: "error",
+      message: error.message,
     });
   }
 }
@@ -41,8 +42,8 @@ async function SignIn(req, res) {
 
   if (!email || !password) {
     return res.status(400).json({
-      status: 'error',
-      message: 'Email and password are required',
+      status: "error",
+      message: "Email and password are required",
     });
   }
 
@@ -52,8 +53,8 @@ async function SignIn(req, res) {
 
     if (user.length === 0) {
       return res.status(401).json({
-        status: 'error',
-        message: 'Invalid credentials',
+        status: "error",
+        message: "Invalid credentials",
       });
     }
 
@@ -62,8 +63,8 @@ async function SignIn(req, res) {
 
     if (!isMatch) {
       return res.status(401).json({
-        status: 'error',
-        message: 'Invalid credentials',
+        status: "error",
+        message: "Invalid credentials",
       });
     }
 
@@ -72,8 +73,8 @@ async function SignIn(req, res) {
     // res.cookie("token", token, { httpOnly: true });
 
     res.status(200).json({
-      status: 'success',
-      message: 'Login successful',
+      status: "success",
+      message: "Login successful",
       user: {
         id: user[0].id,
         username: user[0].username,
@@ -82,21 +83,21 @@ async function SignIn(req, res) {
       },
     });
   } catch (error) {
-    console.error('Error during login:', error);
+    console.error("Error during login:", error);
     res.status(500).json({
-      status: 'error',
-      message: 'Internal server error',
+      status: "error",
+      message: "Internal server error",
     });
   }
 }
 
 async function logout(req, res) {
   // Hapus token dari cookie atau sesi
-  res.clearCookie('token'); // Pastikan Anda sudah menyetel cookie token saat login
+  res.clearCookie("token"); // Pastikan Anda sudah menyetel cookie token saat login
 
   res.status(200).json({
-    status: 'success',
-    message: 'Logout successful',
+    status: "success",
+    message: "Logout successful",
   });
 }
 
