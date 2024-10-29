@@ -1,5 +1,5 @@
-const mysql = require("mysql2/promise");
-const dotenv = require("dotenv");
+const mysql = require('mysql2/promise');
+const dotenv = require('dotenv');
 
 dotenv.config();
 
@@ -13,8 +13,8 @@ const db = mysql.createPool({
 });
 
 const config = {
-  issuer: process.env.JWT_ISSUER || "APPLMS",
-  audience: process.env.JWT_AUDIENCE || "your_audience_value", // ganti dengan nilai default jika perlu
+  issuer: process.env.JWT_ISSUER || 'APPLMS',
+  audience: process.env.JWT_AUDIENCE || 'RT_AIMS',
 };
 
 async function query(query, value) {
@@ -22,7 +22,7 @@ async function query(query, value) {
     const [result] = await db.query(query, value === undefined ? [] : value);
     return result;
   } catch (error) {
-    console.log("Failed to connect database:", error);
+    console.log('Failed to connect database:', error);
     throw error;
   }
 }
