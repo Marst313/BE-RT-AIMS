@@ -1,27 +1,31 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const { config } = require("../db/db");
 const fs = require("fs");
-const privateKeypath = path.join(__dirname, "/keys/private.key");
-const publicKeypath = path.join(__dirname, "/keys/public.key");
-
-const config = require("../db/db");
-const privateKey = fs.readFileSync(privateKeypath, "utf8");
-const publicKey = fs.readFileSync(publicKeypath, "utf8");
+const path = require("path"); // Pindahkan impor path ke bagian paling atas
 
 dotenv.config();
+
+const privateKeypath = path.join(process.cwd(), "/keys/private.key"); // Menggunakan process.cwd() alih-alih __dirname
+const publicKeypath = path.join(process.cwd(), "/keys/public.key");
+
+const privateKey = fs.readFileSync(privateKeypath, "utf8");
+const publicKey = fs.readFileSync(publicKeypath, "utf8");
 
 function generateJWT(user, permission) {
   const payload = {
     username: user.username,
     email: user.email,
-    roleId: user.role,
+    fullname: user.fullname,
+    roleId: user.role_id,
+    permission: permission,
   };
 
   var signOptions = {
     issuer: config.issuer,
     subject: user.email,
     audience: config.audience,
-    expiresIn: "1day",
+    expiresIn: "1d",
     algorithm: "RS256",
   };
 

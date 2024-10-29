@@ -1,9 +1,9 @@
-const mysql = require('mysql2/promise');
-const dotenv = require('dotenv');
+const mysql = require("mysql2/promise");
+const dotenv = require("dotenv");
 
 dotenv.config();
 
-// Create the connection pool. The pool-specific settings are the defaults
+// Buat pool koneksi
 const db = mysql.createPool({
   connectionLimit: 10,
   host: process.env.DB_HOST,
@@ -12,15 +12,19 @@ const db = mysql.createPool({
   database: process.env.DB_NAME,
 });
 
+const config = {
+  issuer: process.env.JWT_ISSUER || "APPLMS",
+  audience: process.env.JWT_AUDIENCE || "your_audience_value", // ganti dengan nilai default jika perlu
+};
+
 async function query(query, value) {
   try {
     const [result] = await db.query(query, value === undefined ? [] : value);
-
     return result;
   } catch (error) {
-    console.log('Failed to connect database:', error);
+    console.log("Failed to connect database:", error);
     throw error;
   }
 }
 
-module.exports = { query, db };
+module.exports = { query, db, config };
