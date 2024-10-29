@@ -1,5 +1,5 @@
-const { query } = require("../db/db");
-const { generateUuid } = require("../utils/uuid");
+const { query } = require('../db/db');
+const { generateUuid } = require('../utils/uuid');
 
 const Users = {
   createUser: async function (userData) {
@@ -27,11 +27,8 @@ const Users = {
   },
   getUserByEmail: async (email) => {
     try {
-      console.log("req result:", email);
-      const [result] = await query(
-        `SELECT id, uuid, username, email, password, role FROM users WHERE email = ?`,
-        [email]
-      );
+      console.log('req result:', email);
+      const [result] = await query(`SELECT uuid, username, email, password, role FROM users WHERE email = ?`, [email]);
       return result;
     } catch (error) {
       throw error;
