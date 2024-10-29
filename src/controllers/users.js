@@ -1,6 +1,8 @@
 const bcrypt = require("bcrypt");
+const Users = require("../models/users");
 const { generateUuid } = require("../utils/uuid");
-const { hashPassword } = require("../utils/bcrypt");
+
+const { hashPassword, verifyPassword } = require("../utils/bcrypt");
 const User = require("../models/users");
 const { err } = require("../utils/customError");
 
@@ -39,55 +41,45 @@ async function SignUp(req, res) {
 
 async function SignIn(req, res) {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({
-      status: "error",
-      message: "Email and password are required",
-    });
-  }
-
   try {
-    // Mencari pengguna berdasarkan email
-    // const [user] = await db.promise().query(`SELECT * FROM users WHERE email = ?`, [email]);
-
-    if (user.length === 0) {
-      return res.status(401).json({
-        status: "error",
-        message: "Invalid credentials",
-      });
+    const user = await verifyUser(email, password);
+    if (user === undefined) {
+      throw new Error("Incorrect username or password!");
     }
+    //const permissions = await Permissions.getPermissions(user);
+    //if (permissions === undefined) {
+    //  throw new Error("No permissions found for user");
+    //}
+    //const token = await generateJWT(user, permissions);
+    //const verifyToken = await verifyJWT(token);
 
-    // Memverifikasi password
-    const isMatch = await bcrypt.compare(password, user[0].password);
-
-    if (!isMatch) {
-      return res.status(401).json({
-        status: "error",
-        message: "Invalid credentials",
-      });
-    }
-
-    // Set token di cookie jika menggunakan JWT
-    // const token = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    // res.cookie("token", token, { httpOnly: true });
-
-    res.status(200).json({
-      status: "success",
+    return res.status(200).json({
       message: "Login successful",
-      user: {
-        id: user[0].id,
-        username: user[0].username,
-        email: user[0].email,
-        role: user[0].role,
+      data: {
+        //token,
+        user: {
+          username: user.username,
+        },
       },
     });
   } catch (error) {
-    console.error("Error during login:", error);
-    res.status(500).json({
-      status: "error",
-      message: "Internal server error",
+    return res.status(err.errorLogin.statusCode).json({
+      message: err.errorLogin.message,
+      error: error.message,
     });
+  }
+}
+
+async function verifyUser(email, password) {
+  try {
+    const user = await Users.getUserByEmail(email);
+    if (user === undefined) {
+      return undefined;
+    }
+    const isValid = await verifyPassword(password, user.password);
+    return isValid ? user : undefined;
+  } catch (error) {
+    throw error;
   }
 }
 
@@ -101,4 +93,4 @@ async function logout(req, res) {
   });
 }
 
-module.exports = { SignUp, SignIn, logout };
+module.exports = { SignUp, SignIn, logout, verifyUser };
