@@ -1,5 +1,5 @@
-const db = require("../db");
-const bcrypt = require("bcrypt");
+const { db, query } = require('../db');
+const bcrypt = require('bcrypt');
 
 async function initializeTables() {
   const checkTableQuery = `
@@ -14,10 +14,10 @@ async function initializeTables() {
       \`id\` int(8) NOT NULL AUTO_INCREMENT,
       \`uuid\` char(36) NOT NULL,
       \`username\` varchar(255) NOT NULL,
-      \`email\` varchar(255) NOT NULL,
+      \`email\` varchar(255) NOT NULL UNIQUE,
       \`password\` varchar(255) NOT NULL,
       \`role\` char(36) NOT NULL,
-      \`id_history\` char(36) NOT NULL,
+      \`id_history\` char(36),
       PRIMARY KEY(\`id\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;`,
 
@@ -39,59 +39,14 @@ async function initializeTables() {
   ];
 
   try {
-    for (let createTable of createNewTableQuery) {
-      await new Promise(function (resolve, reject) {
-        db.query(createTable, function (err) {
-          if (err) {
-            console.error(`Error creating table:`);
-            return reject(err);
-          }
-          resolve();
-        });
-      });
+    for (let createQuery of createNewTableQuery) {
+      await query(createQuery);
     }
 
-    console.log("Database is ready");
-    // Hapus atau komentari baris ini untuk mencegah penambahan data otomatis
-    // await seedDatabase(); // Memanggil fungsi seedDatabase setelah tabel diinisialisasi
+    console.log('Database is ready');
   } catch (error) {
     console.log(error);
   }
 }
 
-// Fungsi untuk menambah data pengguna (dapat dijalankan secara manual jika diperlukan)
-async function seedDatabase() {
-  const userData = {
-    uuid: "1",
-    username: "selta",
-    email: "seltajaya.16@gmail.com",
-    password: "selta1221", // Pastikan untuk menghash password sebelum menyimpan
-    role: "admin",
-    id_history: "1",
-  };
-
-  try {
-    // Hash password sebelum menyimpannya
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-
-    // Menyisipkan data ke tabel users
-    const result = await db.promise().query(
-      `INSERT INTO users (uuid, username, email, password, role, id_history) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        userData.uuid,
-        userData.username,
-        userData.email,
-        hashedPassword,
-        userData.role,
-        userData.id_history,
-      ]
-    );
-
-    console.log("User inserted with ID:", result[0].insertId);
-  } catch (error) {
-    console.error("Error seeding database:", error);
-  }
-}
-
-module.exports = { initializeTables, seedDatabase };
+module.exports = { initializeTables };
