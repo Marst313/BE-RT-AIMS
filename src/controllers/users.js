@@ -3,6 +3,8 @@ const { generateJWT, verifyJWT } = require("../utils/jwt");
 const { hashPassword, verifyPassword } = require("../utils/bcrypt");
 const User = require("../models/users");
 const { err } = require("../utils/customError");
+const Users = require("../models/users");
+const { validatePermission } = require("../middleware/authMiddleware");
 
 async function SignUp(req, res) {
   const { uuid, username, email, password, role } = req.body;
@@ -53,6 +55,8 @@ async function SignIn(req, res) {
     //   throw new Error("No permissions found for user");
     // }
     const token = await generateJWT(user);
+    // const verifyToken = await verifyJWT(token);
+    // const validateAccess = await validatePermission(verifyToken);
 
     return res.status(200).json({
       message: "Login successful",
@@ -84,14 +88,47 @@ async function verifyUser(email, password) {
   }
 }
 
-async function logout(req, res) {
-  // Hapus token dari cookie atau sesi
-  res.clearCookie("token"); // Pastikan Anda sudah menyetel cookie token saat login
+// ini yang perlu database
+// async function logout(req, res) {
+//   const token = req.headers.authorization?.split(" ")[1];
+//   if (token === undefined) {
+//     return res.status(400).json({ message: "No token provided" });
+//   }
+//   try {
+//     const result = await Users.logoutUser(token);
+//     if (result) {
+//       return res.status(200).json({
+//         message: "Logout successfully",
+//       });
+//     }
+//     return res.status(400).json({ message: "Logout failed" });
+//   } catch (error) {
+//     return res.status(err.errorLogout.statusCode).json({
+//       message: err.errorLogout.message,
+//       error: error.message,
+//     });
+//   }
+// }
 
-  res.status(200).json({
-    status: "success",
-    message: "Logout successful",
-  });
+//ini yang ngga perlu database
+async function logout(req, res) {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(400).json({ message: "No token provided" });
+  }
+
+  try {
+    const decoded = verifyJWT(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+    return res.status(200).json({ message: "Logout successfully" });
+  } catch (error) {
+    return res
+      .status(401)
+      .json({ message: "Invalid token", error: error.message });
+  }
 }
 
 module.exports = { SignUp, SignIn, logout, verifyUser };

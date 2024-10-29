@@ -1,5 +1,5 @@
-const { query } = require('../db/db');
-const { generateUuid } = require('../utils/uuid');
+const { query } = require("../db/db");
+const { generateUuid } = require("../utils/uuid");
 
 const Users = {
   createUser: async function (userData) {
@@ -27,13 +27,28 @@ const Users = {
   },
   getUserByEmail: async (email) => {
     try {
-      console.log('req result:', email);
-      const [result] = await query(`SELECT uuid, username, email, password, role FROM users WHERE email = ?`, [email]);
+      console.log("req result:", email);
+      const [result] = await query(
+        `SELECT uuid, username, email, password, role FROM users WHERE email = ?`,
+        [email]
+      );
       return result;
     } catch (error) {
       throw error;
     }
   },
+  //ini kalo perlu database
+  // logoutUser: async (token) => {
+  //   try {
+  //     const result = await query(
+  //       `UPDATE users SET refresh_token = NULL WHERE refresh_token = ?`,
+  //       token
+  //     );
+  //     return result;
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // },
 };
 
 module.exports = Users;
