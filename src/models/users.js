@@ -1,5 +1,5 @@
-const { query } = require("../db/db");
-const { generateUuid } = require("../utils/uuid");
+const { query } = require('../db/db');
+const { generateUuid } = require('../utils/uuid');
 
 const Users = {
   createUser: async function (userData) {
@@ -25,30 +25,36 @@ const Users = {
       throw error;
     }
   },
-  getUserByEmail: async (email) => {
+
+  getUserByEmail: async function (email) {
     try {
-      console.log("req result:", email);
-      const [result] = await query(
-        `SELECT uuid, username, email, password, role FROM users WHERE email = ?`,
-        [email]
-      );
+      const [result] = await query(`SELECT uuid, username, email, password, role FROM users WHERE email = ?`, [email]);
       return result;
     } catch (error) {
       throw error;
     }
   },
-  //ini kalo perlu database
-  // logoutUser: async (token) => {
-  //   try {
-  //     const result = await query(
-  //       `UPDATE users SET refresh_token = NULL WHERE refresh_token = ?`,
-  //       token
-  //     );
-  //     return result;
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // },
+
+  storeRefreshToken: async function (uuid, refreshToken) {
+    try {
+      const result = await query(`UPDATE users SET refresh_token = ? WHERE uuid = ?`, [refreshToken, uuid]);
+
+      return result.affectedRows > 0;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  removeRefreshToken: async function (uuid) {
+    try {
+      const result = await query(`UPDATE users SET refresh_token = null where uuid = ?`, [uuid]);
+
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  },
 };
 
 module.exports = Users;

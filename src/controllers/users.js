@@ -1,18 +1,15 @@
-const bcrypt = require("bcrypt");
-const { generateJWT, verifyJWT } = require("../utils/jwt");
-const { hashPassword, verifyPassword } = require("../utils/bcrypt");
-const User = require("../models/users");
-const { err } = require("../utils/customError");
-const Users = require("../models/users");
-const { validatePermission } = require("../middleware/authMiddleware");
+const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
+const { hashPassword, verifyPassword } = require('../utils/bcrypt');
+const User = require('../models/users');
+const { err } = require('../utils/customError');
 
 async function SignUp(req, res) {
-  const { uuid, username, email, password, role } = req.body;
+  const { username, email, password, role } = req.body;
 
   if (!username || !email || !password || !role) {
     return res.status(400).json({
-      status: "error",
-      message: "All fields are required",
+      status: 'error',
+      message: 'All fields are required',
     });
   }
 
@@ -27,8 +24,8 @@ async function SignUp(req, res) {
     req.password = undefined;
 
     res.status(201).json({
-      status: "success",
-      message: "User created successfully",
+      status: 'success',
+      message: 'User created successfully',
     });
   } catch (error) {
     console.log(error);
@@ -42,29 +39,31 @@ async function SignUp(req, res) {
 
 async function SignIn(req, res) {
   try {
+    // ! VERIFY USER IN DATABASE
     const user = await verifyUser(req.body.email, req.body.password);
+
+    // ! CHECK IF NO USER RETURN ERROR
     if (user === undefined) {
-      throw new Error("Incorrect username or password!");
+      throw new Error('Incorrect username or password!');
     }
+    // ! REMOVE PASSWORD FROM RESULT
     user.password = undefined;
 
-    const { email, uuid, username, role } = user;
+    const { email, uuid, username } = user;
 
-    // const permissions = await Permissions.getPermissions(user);
-    // if (permissions === undefined) {
-    //   throw new Error("No permissions found for user");
-    // }
-    const token = await generateJWT(user);
-    // const verifyToken = await verifyJWT(token);
-    // const validateAccess = await validatePermission(verifyToken);
+    // ! GENERATE ACCESS TOKEN
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    await User.storeRefreshToken(user.uuid, refreshToken);
 
     return res.status(200).json({
-      message: "Login successful",
+      message: 'Login successful',
       data: {
         id: uuid,
         email,
         username,
-        token,
+        token: accessToken,
       },
     });
   } catch (error) {
@@ -88,46 +87,15 @@ async function verifyUser(email, password) {
   }
 }
 
-// ini yang perlu database
-// async function logout(req, res) {
-//   const token = req.headers.authorization?.split(" ")[1];
-//   if (token === undefined) {
-//     return res.status(400).json({ message: "No token provided" });
-//   }
-//   try {
-//     const result = await Users.logoutUser(token);
-//     if (result) {
-//       return res.status(200).json({
-//         message: "Logout successfully",
-//       });
-//     }
-//     return res.status(400).json({ message: "Logout failed" });
-//   } catch (error) {
-//     return res.status(err.errorLogout.statusCode).json({
-//       message: err.errorLogout.message,
-//       error: error.message,
-//     });
-//   }
-// }
-
-//ini yang ngga perlu database
 async function logout(req, res) {
-  const token = req.headers.authorization?.split(" ")[1];
-
-  if (!token) {
-    return res.status(400).json({ message: "No token provided" });
-  }
-
   try {
-    const decoded = verifyJWT(token);
-    if (!decoded) {
-      return res.status(401).json({ message: "Invalid token" });
-    }
-    return res.status(200).json({ message: "Logout successfully" });
+    const { uuid } = req.body;
+
+    await User.removeRefreshToken(uuid);
+
+    return res.status(200).json({ message: 'Logout successfully' });
   } catch (error) {
-    return res
-      .status(401)
-      .json({ message: "Invalid token", error: error.message });
+    return res.status(401).json({ message: 'Invalid token', error: error.message });
   }
 }
 

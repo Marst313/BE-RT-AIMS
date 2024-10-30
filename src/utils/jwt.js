@@ -12,20 +12,35 @@ const publicKeypath = path.join(process.cwd(), '/keys/public.key');
 const privateKey = fs.readFileSync(privateKeypath, 'utf8');
 const publicKey = fs.readFileSync(publicKeypath, 'utf8');
 
-function generateJWT(user, permission) {
+let signOptions = {
+  issuer: config.issuer,
+  audience: config.audience,
+  expiresIn: '14m',
+  algorithm: 'RS256',
+};
+
+function generateAccessToken(user, permission) {
   const payload = {
-    username: user.username,
-    email: user.email,
-    roleId: user.role_id,
+    username: user?.username,
+    email: user?.email,
+    roleId: user?.role_id,
   };
 
-  var signOptions = {
-    issuer: config.issuer,
-    subject: user.email,
-    audience: config.audience,
-    expiresIn: '1h',
-    algorithm: 'RS256',
+  signOptions.subject = user?.email;
+
+  const token = jwt.sign(payload, privateKey, signOptions);
+  return token;
+}
+
+function generateRefreshToken(user, permission) {
+  const payload = {
+    username: user?.username,
+    email: user?.email,
+    roleId: user?.role_id,
   };
+
+  signOptions.expiresIn = '30d';
+  signOptions.subject = user?.email;
 
   const token = jwt.sign(payload, privateKey, signOptions);
   return token;
@@ -44,25 +59,8 @@ function verifyJWT(token) {
     throw new Error('Invalid token');
   }
 }
-
-function generateResetToken(user) {
-  const payload = {
-    user: user.email,
-  };
-
-  const signOptions = {
-    issuer: config.issuer,
-    subject: user.email,
-    audience: config.audience,
-    expiresIn: '1h',
-    algorithm: 'RS256',
-  };
-
-  return jwt.sign(payload, privateKey, signOptions);
-}
-
 module.exports = {
-  generateJWT,
   verifyJWT,
-  generateResetToken,
+  generateRefreshToken,
+  generateAccessToken,
 };
