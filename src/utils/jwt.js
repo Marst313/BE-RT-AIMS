@@ -1,22 +1,22 @@
-const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-const { config } = require('../db/db');
-const fs = require('fs');
-const path = require('path'); // Pindahkan impor path ke bagian paling atas
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
+const { config } = require("../db/db");
+const fs = require("fs");
+const path = require("path"); // Pindahkan impor path ke bagian paling atas
 
 dotenv.config();
 
-const privateKeypath = path.join(process.cwd(), '/keys/private.key'); // Menggunakan process.cwd() alih-alih __dirname
-const publicKeypath = path.join(process.cwd(), '/keys/public.key');
+const privateKeypath = path.join(process.cwd(), "/keys/private.key"); // Menggunakan process.cwd() alih-alih __dirname
+const publicKeypath = path.join(process.cwd(), "/keys/public.key");
 
-const privateKey = fs.readFileSync(privateKeypath, 'utf8');
-const publicKey = fs.readFileSync(publicKeypath, 'utf8');
+const privateKey = fs.readFileSync(privateKeypath, "utf8");
+const publicKey = fs.readFileSync(publicKeypath, "utf8");
 
 let signOptions = {
   issuer: config.issuer,
   audience: config.audience,
-  expiresIn: '14m',
-  algorithm: 'RS256',
+  expiresIn: "14m",
+  algorithm: "RS256",
 };
 
 function generateAccessToken(user, permission) {
@@ -39,7 +39,7 @@ function generateRefreshToken(user, permission) {
     roleId: user?.role_id,
   };
 
-  signOptions.expiresIn = '30d';
+  signOptions.expiresIn = "30d";
   signOptions.subject = user?.email;
 
   const token = jwt.sign(payload, privateKey, signOptions);
@@ -50,13 +50,13 @@ function verifyJWT(token) {
   var verifyOptions = {
     issuer: config.issuer,
     audience: config.audience,
-    expiresIn: '1h',
-    algorithm: ['RS256'],
+    expiresIn: "1h",
+    algorithm: ["RS256"],
   };
   try {
     return jwt.verify(token, publicKey, verifyOptions);
   } catch (error) {
-    throw new Error('Invalid token');
+    throw new Error("Invalid token");
   }
 }
 module.exports = {
