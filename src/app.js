@@ -1,10 +1,11 @@
-const express = require("express");
-const cors = require("cors");
-const { config } = require("dotenv");
+const express = require('express');
+const cors = require('cors');
+const { config } = require('dotenv');
+const cookieParser = require('cookie-parser');
 
 const app = express();
-const router = require("./routes/index");
-const { initializeTables } = require("./db/seeders/seedingDb");
+const router = require('./routes/index');
+const { initializeTables } = require('./db/seeders/seedingDb');
 
 config();
 
@@ -15,6 +16,9 @@ app.use(
     origin: process.env.ORIGIN,
   })
 );
+
+// ! PARSING COOKIE
+app.use(cookieParser());
 
 // ! Middleware to parse JSON bodies
 app.use(express.json()); // Tambahkan ini untuk mengurai body JSON
@@ -32,7 +36,7 @@ async function startServer() {
       console.log(`server app listening on port http://localhost:${port}`);
     });
   } catch (error) {
-    console.error("Failed to initialize database tables:", error);
+    console.error('Failed to initialize database tables:', error);
     process.exit(1);
   }
 }

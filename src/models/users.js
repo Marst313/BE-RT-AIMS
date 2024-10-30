@@ -28,7 +28,7 @@ const Users = {
 
   getUserByEmail: async function (email) {
     try {
-      const [result] = await query(`SELECT uuid, username, email, password, role FROM users WHERE email = ?`, [email]);
+      const [result] = await query(`SELECT uuid, username, email, password, role, refresh_token FROM users WHERE email = ?`, [email]);
       return result;
     } catch (error) {
       throw error;
