@@ -5,6 +5,7 @@ const Result = {
   createResult: async (resultdata) => {
     try {
       const id = generateUuid();
+
       // Masukkan data ke dalam tabel result
       await query(
         `INSERT INTO result (id, transcript, summary)
@@ -14,11 +15,10 @@ const Result = {
 
       // Ambil id_history dari resultdata untuk mengupdate tabel history
       const historyId = generateUuid();
-
       // Update tabel history dengan id_result yang baru
       await query(
         `INSERT INTO history (id, id_result)
-         VALUES (?, ?)`,
+     VALUES (?, ?)`,
         [historyId, id]
       );
 

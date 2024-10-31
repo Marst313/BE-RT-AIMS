@@ -41,7 +41,8 @@ const History = {
   },
   deleteHistory: async (id) => {
     try {
-      const result = await query(`DELETE FROM history WHERE id=?`, id);
+      const result = await query("DELETE FROM history WHERE id = ?", [id]);
+
       return result;
     } catch (error) {
       throw error;

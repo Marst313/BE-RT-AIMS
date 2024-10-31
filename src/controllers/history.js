@@ -170,8 +170,9 @@ const deleteHistory = async function (req, res) {
     }
 
     const { id } = req.params;
+    const { id_result } = req.body;
     try {
-      const result = await History.deleteHistory(id);
+      const result = await History.deleteHistory(id, id_result);
       if (!result.affectedRows) {
         return res.status(404).json({ message: "History not found" });
       }
