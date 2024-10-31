@@ -29,18 +29,12 @@ const History = {
   updateHistory: async (historyid, historydata) => {
     try {
       const result = await query(
-        `UPDATE course SET title = ?, 
+        `UPDATE history SET
         title = ?, 
         date = ?, 
-        file = ?, 
+        file = ? 
         WHERE id = ?`,
-        [
-          historydata.title,
-          historydata.title,
-          historydata.date,
-          historydata.file,
-          historyid,
-        ]
+        [historydata.title, historydata.date, historydata.file, historyid]
       );
       return result;
     } catch (error) {}
@@ -53,28 +47,14 @@ const History = {
       throw error;
     }
   },
-  //! jangan dihapus dulu, mau buat inner join nya bang
-  //   getAllCourse: async () => {
-  //     try {
-  //       const result = await query(
-  //         `SELECT course.id,
-  //         course.title,
-  //         course.description,
-  //         course.thumbnail,
-  //         course.start_date,
-  //         course.end_date,
-  //         sub_category_id, sub_categories AS subCategories
-  //         FROM course
-  //         LEFT JOIN sub_categories ON course.sub_category_id = sub_categories.id`
-  //       );
-  //       return result;
-  //     } catch (error) {
-  //       throw error;
-  //     }
-  //   },
-  GetHistory: async () => {
+  GetHistory: async function () {
     try {
-      const result = await query(`SELECT title,date,file FROM history`);
+      const result = await query(`SELECT history.id,
+          history.title,
+          history.date,
+          history.file
+          FROM history 
+          INNER JOIN result ON history.id_result = result.id;`);
       return result;
     } catch (error) {
       throw error;
