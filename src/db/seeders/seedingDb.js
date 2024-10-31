@@ -1,5 +1,5 @@
-const { db, query } = require("../db");
-const bcrypt = require("bcrypt");
+const { db, query } = require('../db');
+const bcrypt = require('bcrypt');
 
 async function initializeTables() {
   const checkTableQuery = `
@@ -11,8 +11,7 @@ async function initializeTables() {
 
   const createNewTableQuery = [
     `CREATE TABLE IF NOT EXISTS \`users\` (
-        \`id\` int(8) NOT NULL AUTO_INCREMENT,
-        \`uuid\` char(36) NOT NULL,
+        \`id\` char(36) NOT NULL,
         \`username\` varchar(255) NOT NULL,
         \`email\` varchar(255) NOT NULL UNIQUE,
         \`password\` varchar(255) NOT NULL,
@@ -33,7 +32,7 @@ async function initializeTables() {
         \`id\` char(36) NOT NULL,
         \`title\` varchar(255) NOT NULL,
         \`date\` date NOT NULL,
-        \`file\` varchar(255) NOT NULL,
+        \`file\` varchar(255) ,
         \`id_result\` char(36) NOT NULL,
         PRIMARY KEY (\`id\`),
         FOREIGN KEY (\`id_result\`) REFERENCES \`result\`(\`id\`) ON DELETE CASCADE
@@ -45,7 +44,7 @@ async function initializeTables() {
       await query(createQuery);
     }
 
-    console.log("Database is ready");
+    console.log('Database is ready');
   } catch (error) {
     console.log(error);
   }

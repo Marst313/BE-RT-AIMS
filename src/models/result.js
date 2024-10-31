@@ -1,28 +1,26 @@
-const { query } = require("../db/db");
-const { generateUuid } = require("../utils/uuid");
+const { query } = require('../db/db');
+const { generateUuid } = require('../utils/uuid');
 
 const Result = {
-  createResult: async (resultdata) => {
+  createResult: async (resultData) => {
     try {
-      const id = generateUuid();
+      const idResult = generateUuid();
 
-      // Masukkan data ke dalam tabel result
       await query(
         `INSERT INTO result (id, transcript, summary)
          VALUES (?, ?, ?)`,
-        [id, resultdata.transcript, resultdata.summary]
+        [idResult, resultData.transcript, resultData.summary]
       );
 
-      // Ambil id_history dari resultdata untuk mengupdate tabel history
       const historyId = generateUuid();
-      // Update tabel history dengan id_result yang baru
-      await query(
-        `INSERT INTO history (id, id_result)
-     VALUES (?, ?)`,
-        [historyId, id]
-      );
 
-      return id; // Mengembalikan id yang baru ditambahkan
+      const today = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+      await query(
+        `INSERT INTO history (id, title, date, file, id_result)
+     VALUES (?, ?, ?, ?, ?)`,
+        [historyId, resultData.title, today, resultData.file, idResult]
+      );
     } catch (error) {
       throw error;
     }
