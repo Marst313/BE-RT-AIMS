@@ -1,11 +1,11 @@
-const express = require("express");
-const historyController = require("../controllers/history");
+const express = require('express');
+const historyController = require('../controllers/history');
 const router = express.Router();
 
-router.post("/addhistory", historyController.createHistory);
-router.get("/history", historyController.getAllHistory);
-router.get("/history/:id", historyController.getHistoryById);
-router.put("/history/:id", historyController.updateHistory);
-router.delete("/history/:id", historyController.deleteHistory);
+router.post('/', historyController.createHistory);
+router.get('/', historyController.getAllHistory);
+router.get('/:id', historyController.getHistoryById);
+router.put('/:id', historyController.updateHistory);
+router.delete('/:id', historyController.deleteHistory);
 
 module.exports = router;
