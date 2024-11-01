@@ -1,5 +1,5 @@
-const { query } = require('../db/db');
-const { generateUuid } = require('../utils/uuid');
+const { query } = require("../db/db");
+const { generateUuid } = require("../utils/uuid");
 
 const Result = {
   createResult: async (resultData) => {
@@ -14,7 +14,7 @@ const Result = {
 
       const idHistory = generateUuid();
 
-      const today = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      const today = new Date().toISOString().slice(0, 19).replace("T", " ");
 
       await query(
         `INSERT INTO history (id, title, date, file, id_result)
@@ -22,7 +22,12 @@ const Result = {
         [idHistory, resultData.title, today, resultData.fileName, idResult]
       );
 
-      return { id: idResult, title: resultData.title, fileName: resultData.fileName, id_history: idHistory };
+      return {
+        id: idResult,
+        title: resultData.title,
+        fileName: resultData.fileName,
+        id_history: idHistory,
+      };
     } catch (error) {
       throw error;
     }

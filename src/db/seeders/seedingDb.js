@@ -1,5 +1,5 @@
-const { db, query } = require('../db');
-const bcrypt = require('bcrypt');
+const { db, query } = require("../db");
+const bcrypt = require("bcrypt");
 
 async function initializeTables() {
   const checkTableQuery = `
@@ -44,7 +44,7 @@ async function initializeTables() {
       await query(createQuery);
     }
 
-    console.log('Database is ready');
+    console.log("Database is ready");
   } catch (error) {
     console.log(error);
   }

@@ -1,5 +1,5 @@
-const { query } = require('../db/db');
-const { generateUuid } = require('../utils/uuid');
+const { query } = require("../db/db");
+const { generateUuid } = require("../utils/uuid");
 
 const History = {
   createHistory: async (historydata) => {
@@ -13,7 +13,13 @@ const History = {
               file, 
               id_result
             ) VALUES (?, ?, ?, ?, ?)`,
-        [id, historydata.title, historydata.date, historydata.file, historydata.id_result]
+        [
+          id,
+          historydata.title,
+          historydata.date,
+          historydata.file,
+          historydata.id_result,
+        ]
       );
       return result.insertId;
     } catch (error) {
@@ -49,8 +55,8 @@ const History = {
 
       if (!result || !result.id_result) return 0;
 
-      await query('DELETE FROM result WHERE id = ?', [result.id_result]);
-      await query('DELETE FROM history WHERE id = ?', [id]);
+      await query("DELETE FROM result WHERE id = ?", [result.id_result]);
+      await query("DELETE FROM history WHERE id = ?", [id]);
 
       return 1;
     } catch (error) {
