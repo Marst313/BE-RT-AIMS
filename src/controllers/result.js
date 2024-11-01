@@ -21,12 +21,14 @@ const createResult = async (req, res) => {
       return res.status(403).json({ message: 'Invalid access token' });
     }
 
-    const { transcript, summary, title, file } = req.body;
+    const { transcript, summary, title, fileName } = req.body;
 
-    const resultId = await Result.createResult({ transcript, summary, title, file });
+    const data = await Result.createResult({ transcript, summary, title, fileName });
 
     res.status(201).json({
       message: 'Result created successfully',
+      status: 'success',
+      data,
     });
   } catch (error) {
     res.status(500).json({

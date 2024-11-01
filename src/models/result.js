@@ -12,15 +12,17 @@ const Result = {
         [idResult, resultData.transcript, resultData.summary]
       );
 
-      const historyId = generateUuid();
+      const idHistory = generateUuid();
 
       const today = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
       await query(
         `INSERT INTO history (id, title, date, file, id_result)
      VALUES (?, ?, ?, ?, ?)`,
-        [historyId, resultData.title, today, resultData.file, idResult]
+        [idHistory, resultData.title, today, resultData.fileName, idResult]
       );
+
+      return { id: idResult, title: resultData.title, fileName: resultData.fileName, id_history: idHistory };
     } catch (error) {
       throw error;
     }
