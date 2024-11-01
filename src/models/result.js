@@ -27,15 +27,6 @@ const Result = {
       throw error;
     }
   },
-
-  getResultById: async (id) => {
-    try {
-      const result = await query(`SELECT * FROM result WHERE id = ?`, [id]);
-      return result;
-    } catch (error) {
-      throw error;
-    }
-  },
 };
 
 module.exports = Result;
