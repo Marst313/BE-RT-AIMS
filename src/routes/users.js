@@ -1,10 +1,10 @@
 const router = require('express').Router();
-const { SignUp, SignIn, SignOut, RefreshToken } = require('../controllers/users');
-const { validateMiddleware, loginSchema } = require('../middleware/authMiddleware');
+const { SignUp, SignIn, SignOut, RefreshToken } = require('../controllers/authController');
 
 router.post('/sign-up', SignUp);
-router.post('/sign-in', validateMiddleware(loginSchema), SignIn);
-router.post('/refresh-token', RefreshToken);
+router.post('/sign-in', SignIn);
+
 router.delete('/sign-out', SignOut);
+router.post('/refresh-token', RefreshToken);
 
 module.exports = router;

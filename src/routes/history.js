@@ -1,11 +1,14 @@
 const express = require('express');
 const historyController = require('../controllers/history');
+const authController = require('../controllers/authController');
 const router = express.Router();
+
+router.use(authController.protect);
 
 router
   .route('/') //
   .post(historyController.createHistory)
-  .get(historyController.getAllHistory);
+  .get(authController.restrictTo('admin'), historyController.getAllHistory);
 
 router
   .route('/:id') //

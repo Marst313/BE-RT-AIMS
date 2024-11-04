@@ -4,8 +4,11 @@ const { config } = require('dotenv');
 const cookieParser = require('cookie-parser');
 
 const app = express();
+
 const router = require('./routes/index');
 const { initializeTables } = require('./db/seeders/seedingDb');
+const globalErrorHandle = require('./controllers/errorController');
+const AppError = require('./utils/appError');
 
 config();
 
@@ -25,6 +28,14 @@ app.use(express.json()); // Tambahkan ini untuk mengurai body JSON
 
 // ! ROUTING OR ENDPOINT
 app.use(router);
+
+// ! NO ENDPOINT ERROR
+app.all('*', (req, res, next) => {
+  next(new AppError(`Cant find ${req.originalUrl} on this server`, 404));
+});
+
+// ! ERROR HANDLER
+app.use(globalErrorHandle);
 
 const port = process.env.PORT || 3000;
 

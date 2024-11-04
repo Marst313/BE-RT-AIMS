@@ -1,133 +1,172 @@
 const History = require('../models/history');
 const User = require('../models/users');
+const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
 const { verifyJWT } = require('../utils/jwt');
 
-const createHistory = async function (req, res) {
-  const authHeader = req.headers['authorization'];
-  const accessToken = authHeader && authHeader.split(' ')[1];
-  try {
-    const decoded = verifyJWT(accessToken);
-
-    const user = await User.getUserByEmail(decoded.email);
-
-    if (!user) {
-      return res.status(403).json({ message: 'Invalid access token' });
-    }
-
-    const { title, date, file, id_result } = req.body;
-    const newHistoryId = await History.createHistory({
-      title,
-      date,
-      file,
-      id_result,
-    });
-    res.status(201).json({ message: 'History created successfully', id: newHistoryId });
-  } catch (error) {
-    res.status(500).json({ message: 'Error creating history', error: error.message });
-  }
-};
-
-const getAllHistory = async function (req, res) {
-  const authHeader = req.headers['authorization'];
-  const accessToken = authHeader && authHeader.split(' ')[1];
-  try {
-    const decoded = verifyJWT(accessToken);
-
-    const user = await User.getUserByEmail(decoded.email);
-
-    if (!user) {
-      return res.status(403).json({ message: 'Invalid access token' });
-    }
-
-    const historyData = await History.GetHistory();
-    return res.status(200).json(historyData);
-  } catch (error) {
-    return res.status(401).json({ message: 'Invalid token', error: error.message });
-  }
-};
-
-const getHistoryById = async function (req, res) {
-  const authHeader = req.headers['authorization'];
-  const accessToken = authHeader && authHeader.split(' ')[1];
-  try {
-    const decoded = verifyJWT(accessToken);
-
-    const user = await User.getUserByEmail(decoded.email);
-
-    if (!user) {
-      return res.status(403).json({ message: 'Invalid access token' });
-    }
-
-    const { id } = req.params;
-
-    const history = await History.getHistoryById(id);
-
-    if (!history) {
-      return res.status(404).json({ message: 'History not found' });
-    }
-    res.status(200).json({
-      status: 'success',
-      message: 'Success get history',
-      data: history,
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error retrieving history', error: error.message });
-  }
-};
-
-const updateHistory = async function (req, res) {
-  const authHeader = req.headers['authorization'];
-  const accessToken = authHeader && authHeader.split(' ')[1];
-  try {
-    const decoded = verifyJWT(accessToken);
-
-    const user = await User.getUserByEmail(decoded.email);
-
-    if (!user) {
-      return res.status(403).json({ message: 'Invalid access token' });
-    }
-
-    const { id } = req.params;
-    const { title, date, file } = req.body;
-    const result = await History.updateHistory(id, { title, date, file });
-    if (!result.affectedRows) {
-      return res.status(404).json({ message: 'History not found' });
-    }
-    res.status(200).json({ message: 'History updated successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating history', error: error.message });
-  }
-};
-
-const deleteHistory = async function (req, res) {
+const createHistory = catchAsync(async function (req, res, next) {
   const authHeader = req.headers['authorization'];
   const accessToken = authHeader && authHeader.split(' ')[1];
 
   if (!accessToken) {
-    return res.status(400).json({ message: 'Access token required' });
+    return next(new AppError('No access token provided', 401));
   }
 
-  try {
-    const decoded = verifyJWT(accessToken);
+  const decoded = verifyJWT(accessToken);
+  const user = await User.getUserByEmail(decoded.email);
 
-    const user = await User.getUserByEmail(decoded.email);
-
-    if (!user) {
-      return res.status(403).json({ message: 'Invalid access token' });
-    }
-
-    const { id } = req.params;
-    const deleteResult = await History.deleteHistory(id);
-
-    if (deleteResult === 0) {
-      return res.status(404).json({ message: 'History not found' });
-    }
-
-    res.status(200).json({ message: 'History deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error deleting history', error: error.message });
+  if (!user) {
+    return next(new AppError('Invalid access token', 403));
   }
-};
+
+  const { title, date, file, id_result } = req.body;
+
+  if (!title || !date || !file || !id_result) {
+    return next(new AppError('Please provide all required fields', 400));
+  }
+
+  const newHistoryId = await History.createHistory({
+    title,
+    date,
+    file,
+    id_result,
+  });
+
+  res.status(201).json({
+    status: 'success',
+    message: 'History created successfully',
+    data: { id: newHistoryId },
+  });
+});
+
+const getAllHistory = catchAsync(async function (req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const accessToken = authHeader && authHeader.split(' ')[1];
+
+  if (!accessToken) {
+    return next(new AppError('No access token provided', 401));
+  }
+
+  const decoded = verifyJWT(accessToken);
+  const user = await User.getUserByEmail(decoded.email);
+
+  if (!user) {
+    return next(new AppError('Invalid access token', 403));
+  }
+
+  const historyData = await History.GetHistory();
+
+  if (!historyData || historyData.length === 0) {
+    return next(new AppError('No history records found', 404));
+  }
+
+  return res.status(200).json({
+    status: 'success',
+    results: historyData.length,
+    data: historyData,
+  });
+});
+
+const getHistoryById = catchAsync(async function (req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const accessToken = authHeader && authHeader.split(' ')[1];
+
+  if (!accessToken) {
+    return next(new AppError('No access token provided', 401));
+  }
+
+  const decoded = verifyJWT(accessToken);
+  await User.getUserByEmail(decoded.email);
+
+  const { id } = req.params;
+
+  if (!id) {
+    return next(new AppError('Please provide a history ID', 400));
+  }
+
+  const history = await History.getHistoryById(id);
+
+  if (!history) {
+    return next(new AppError('History not found', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Success get history',
+    data: history,
+  });
+});
+
+const updateHistory = catchAsync(async function (req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const accessToken = authHeader && authHeader.split(' ')[1];
+
+  if (!accessToken) {
+    return next(new AppError('No access token provided', 401));
+  }
+
+  const decoded = verifyJWT(accessToken);
+  const user = await User.getUserByEmail(decoded.email);
+
+  if (!user) {
+    return next(new AppError('Invalid access token', 403));
+  }
+
+  const { id } = req.params;
+  const { title, date, file } = req.body;
+
+  if (!id) {
+    return next(new AppError('Please provide a history ID', 400));
+  }
+
+  if (!title && !date && !file) {
+    return next(new AppError('Please provide at least one field to update', 400));
+  }
+
+  const result = await History.updateHistory(id, { title, date, file });
+
+  if (!result.affectedRows) {
+    return next(new AppError('History not found', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'History updated successfully',
+  });
+});
+
+const deleteHistory = catchAsync(async function (req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const accessToken = authHeader && authHeader.split(' ')[1];
+
+  if (!accessToken) {
+    return next(new AppError('No access token provided', 401));
+  }
+
+  const decoded = verifyJWT(accessToken);
+  const user = await User.getUserByEmail(decoded.email);
+
+  if (!user) {
+    return next(new AppError('Invalid access token', 403));
+  }
+
+  const { id } = req.params;
+
+  if (!id) {
+    return next(new AppError('Please provide a history ID', 400));
+  }
+
+  const deleteResult = await History.deleteHistory(id);
+
+  if (deleteResult === 0) {
+    return next(new AppError('History not found', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'History deleted successfully',
+  });
+});
 
 module.exports = {
   createHistory,

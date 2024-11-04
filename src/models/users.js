@@ -1,5 +1,5 @@
-const { query } = require("../db/db");
-const { generateUuid } = require("../utils/uuid");
+const { query } = require('../db/db');
+const { generateUuid } = require('../utils/uuid');
 
 const Users = {
   createUser: async function (userData) {
@@ -28,10 +28,8 @@ const Users = {
 
   getUserByEmail: async function (email) {
     try {
-      const [result] = await query(
-        `SELECT id, username, email, password, role, refresh_token FROM users WHERE email = ?`,
-        [email]
-      );
+      const [result] = await query(`SELECT id, username, email, password, role, refresh_token FROM users WHERE email = ?`, [email]);
+
       return result;
     } catch (error) {
       throw error;
@@ -40,10 +38,7 @@ const Users = {
 
   storeRefreshToken: async function (id, refreshToken) {
     try {
-      const result = await query(
-        `UPDATE users SET refresh_token = ? WHERE id = ?`,
-        [refreshToken, id]
-      );
+      const result = await query(`UPDATE users SET refresh_token = ? WHERE id = ?`, [refreshToken, id]);
 
       return result.affectedRows > 0;
     } catch (error) {
@@ -53,14 +48,10 @@ const Users = {
 
   removeRefreshToken: async function (id) {
     try {
-      const result = await query(
-        `UPDATE users SET refresh_token = null where id = ?`,
-        [id]
-      );
+      const result = await query(`UPDATE users SET refresh_token = null where id = ?`, [id]);
 
       return result.affectedRows > 0;
     } catch (error) {
-      console.log(error);
       throw error;
     }
   },

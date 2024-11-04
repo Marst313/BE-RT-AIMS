@@ -39,7 +39,7 @@ function generateRefreshToken(user, permission) {
     roleId: user?.role_id,
   };
 
-  signOptions.expiresIn = '15m';
+  signOptions.expiresIn = '1d';
   signOptions.subject = user?.email;
 
   const token = jwt.sign(payload, privateKey, signOptions);
@@ -56,7 +56,7 @@ function verifyJWT(token) {
   try {
     return jwt.verify(token, publicKey, verifyOptions);
   } catch (error) {
-    throw new Error('Invalid token');
+    throw error;
   }
 }
 module.exports = {
