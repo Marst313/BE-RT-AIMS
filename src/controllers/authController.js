@@ -96,7 +96,31 @@ const SignOut = catchAsync(async function (req, res, next) {
   });
 });
 
-const RefreshToken = catchAsync(async function (req, res, next) {});
+const RefreshToken = catchAsync(async function (req, res, next) {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return next(new AppError('No refresh token provided', 401));
+  }
+
+  const decoded = verifyJWT(refreshToken);
+
+  const user = await Users.getUserByEmail(decoded.email);
+
+  if (!user || user.refresh_token !== refreshToken) {
+    return next(new AppError('Invalid refresh token', 403));
+  }
+
+  const newAccessToken = generateAccessToken(user);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Access token refreshed successfully',
+    data: {
+      accessToken: newAccessToken,
+    },
+  });
+});
 
 const protect = catchAsync(async function (req, res, next) {
   let token;
