@@ -9,6 +9,8 @@ const router = require('./routes/index');
 const { initializeTables } = require('./db/seeders/seedingDb');
 const globalErrorHandle = require('./controllers/errorController');
 const AppError = require('./utils/appError');
+const { rateLimit } = require('express-rate-limit');
+const { xss } = require('express-xss-sanitizer');
 
 config();
 
@@ -20,11 +22,22 @@ app.use(
   })
 );
 
-// ! PARSING COOKIE
-app.use(cookieParser());
+//! Limiter request
+const limiter = rateLimit({
+  max: 100,
+  windowMs: 60 * 60 * 1000,
+  message: 'Too many request from this IP, wait again an a hour !',
+});
+app.use('/api', limiter);
 
 // ! Middleware to parse JSON bodies
-app.use(express.json()); // Tambahkan ini untuk mengurai body JSON
+app.use(express.json({ limit: '10kb' })); // Tambahkan ini untuk mengurai body JSON
+
+// ! SANITIZES USER INPUT DATA
+app.use(xss());
+
+// ! PARSING COOKIE
+app.use(cookieParser());
 
 // ! ROUTING OR ENDPOINT
 app.use(router);
