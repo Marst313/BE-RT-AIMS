@@ -2,18 +2,9 @@ const History = require('../models/history');
 const User = require('../models/users');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const { verifyJWT } = require('../utils/jwt');
 
 const createHistory = catchAsync(async function (req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const accessToken = authHeader && authHeader.split(' ')[1];
-
-  if (!accessToken) {
-    return next(new AppError('No access token provided', 401));
-  }
-
-  const decoded = verifyJWT(accessToken);
-  const user = await User.getUserByEmail(decoded.email);
+  const user = await User.getUserByEmail(req.user.email);
 
   if (!user) {
     return next(new AppError('Invalid access token', 403));
@@ -40,15 +31,7 @@ const createHistory = catchAsync(async function (req, res, next) {
 });
 
 const getAllHistory = catchAsync(async function (req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const accessToken = authHeader && authHeader.split(' ')[1];
-
-  if (!accessToken) {
-    return next(new AppError('No access token provided', 401));
-  }
-
-  const decoded = verifyJWT(accessToken);
-  const user = await User.getUserByEmail(decoded.email);
+  const user = await User.getUserByEmail(req.user.email);
 
   if (!user) {
     return next(new AppError('Invalid access token', 403));
@@ -97,6 +80,7 @@ const getMyHistory = async function (req, res, next) {
   res.status(200).json({
     status: 'success',
     message: 'Success get all history',
+    result: history?.length,
     data: history,
   });
 };
@@ -131,7 +115,7 @@ const deleteHistory = catchAsync(async function (req, res, next) {
     return next(new AppError('Please provide a history ID', 400));
   }
 
-  const user = await User.getUserByEmail(decoded.email);
+  const user = await User.getUserByEmail(req.user.email);
   if (!user) {
     return next(new AppError('Invalid access token', 403));
   }
