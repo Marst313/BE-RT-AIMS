@@ -54,7 +54,7 @@ const getAllHistory = catchAsync(async function (req, res, next) {
     return next(new AppError('Invalid access token', 403));
   }
 
-  const historyData = await History.GetHistory();
+  const historyData = await History.getAllHistory();
 
   if (!historyData || historyData.length === 0) {
     return next(new AppError('No history records found', 404));
@@ -68,23 +68,13 @@ const getAllHistory = catchAsync(async function (req, res, next) {
 });
 
 const getHistoryById = catchAsync(async function (req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const accessToken = authHeader && authHeader.split(' ')[1];
-
-  if (!accessToken) {
-    return next(new AppError('No access token provided', 401));
-  }
-
-  const decoded = verifyJWT(accessToken);
-  await User.getUserByEmail(decoded.email);
-
   const { id } = req.params;
 
   if (!id) {
     return next(new AppError('Please provide a history ID', 400));
   }
 
-  const history = await History.getHistoryById(id);
+  const history = await History.getHistoryById(id, req.user.id);
 
   if (!history) {
     return next(new AppError('History not found', 404));
@@ -97,34 +87,34 @@ const getHistoryById = catchAsync(async function (req, res, next) {
   });
 });
 
+const getMyHistory = async function (req, res, next) {
+  const user = req.user;
+
+  const history = await History.getMyHistory(user.id);
+
+  if (history.length === 0) return next(new AppError('History not found', 401));
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Success get all history',
+    data: history,
+  });
+};
+
 const updateHistory = catchAsync(async function (req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const accessToken = authHeader && authHeader.split(' ')[1];
-
-  if (!accessToken) {
-    return next(new AppError('No access token provided', 401));
-  }
-
-  const decoded = verifyJWT(accessToken);
-  const user = await User.getUserByEmail(decoded.email);
-
-  if (!user) {
-    return next(new AppError('Invalid access token', 403));
-  }
-
   const { id } = req.params;
   const { title, date, file } = req.body;
-
-  if (!id) {
-    return next(new AppError('Please provide a history ID', 400));
-  }
 
   if (!title && !date && !file) {
     return next(new AppError('Please provide at least one field to update', 400));
   }
 
-  const result = await History.updateHistory(id, { title, date, file });
+  const user = await User.getUserByEmail(req.user.email);
+  if (!user) {
+    return next(new AppError('Invalid access token', 403));
+  }
 
+  const result = await History.updateHistory(id, { title, date, file });
   if (!result.affectedRows) {
     return next(new AppError('History not found', 404));
   }
@@ -136,35 +126,24 @@ const updateHistory = catchAsync(async function (req, res, next) {
 });
 
 const deleteHistory = catchAsync(async function (req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const accessToken = authHeader && authHeader.split(' ')[1];
-
-  if (!accessToken) {
-    return next(new AppError('No access token provided', 401));
-  }
-
-  const decoded = verifyJWT(accessToken);
-  const user = await User.getUserByEmail(decoded.email);
-
-  if (!user) {
-    return next(new AppError('Invalid access token', 403));
-  }
-
   const { id } = req.params;
-
   if (!id) {
     return next(new AppError('Please provide a history ID', 400));
   }
 
-  const deleteResult = await History.deleteHistory(id);
+  const user = await User.getUserByEmail(decoded.email);
+  if (!user) {
+    return next(new AppError('Invalid access token', 403));
+  }
 
+  const deleteResult = await History.deleteHistory(id);
   if (deleteResult === 0) {
     return next(new AppError('History not found', 404));
   }
 
-  res.status(200).json({
-    status: 'success',
-    message: 'History deleted successfully',
+  res.status(204).json({
+    message: 'success',
+    data: null,
   });
 });
 
@@ -172,6 +151,7 @@ module.exports = {
   createHistory,
   getAllHistory,
   getHistoryById,
+  getMyHistory,
   updateHistory,
   deleteHistory,
 };

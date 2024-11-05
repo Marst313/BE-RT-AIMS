@@ -130,6 +130,9 @@ const protect = catchAsync(async function (req, res, next) {
   req.user = currentUser;
   res.locals.user = currentUser;
 
+  // ! REMOVE PASSWORD
+  req.user.password = undefined;
+
   next();
 });
 

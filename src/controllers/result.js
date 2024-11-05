@@ -1,47 +1,37 @@
-const Result = require("../models/result");
-const User = require("../models/users");
-const { verifyJWT } = require("../utils/jwt");
+const Result = require('../models/result');
+const User = require('../models/users');
 
-const createResult = async (req, res) => {
-  const authHeader = req.headers["authorization"];
-  const accessToken = authHeader && authHeader.split(" ")[1];
+const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
 
-  if (!accessToken) {
-    return res.status(400).json({ message: "Access token required" });
+const createResult = catchAsync(async function (req, res, next) {
+  const { transcript, summary, title, fileName } = req.body;
+
+  if (!transcript || !summary || !title || !fileName) {
+    return next(new AppError('All fields cannot be empty', 403));
   }
 
-  try {
-    // Verifikasi access token
-    const decoded = verifyJWT(accessToken);
+  //! GET EMAIL FROM TOKEN
+  const user = await User.getUserByEmail(req.user?.email);
 
-    // Ambil data pengguna berdasarkan email di token
-    const user = await User.getUserByEmail(decoded.email);
-
-    if (!user) {
-      return res.status(403).json({ message: "Invalid access token" });
-    }
-
-    const { transcript, summary, title, fileName } = req.body;
-
-    const data = await Result.createResult({
-      transcript,
-      summary,
-      title,
-      fileName,
-    });
-
-    res.status(201).json({
-      message: "Result created successfully",
-      status: "success",
-      data,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Error creating result",
-      error: error.message,
-    });
+  if (!user) {
+    return next(new AppError('Email not found!', 401));
   }
-};
+
+  const data = await Result.createResult({
+    id: req.user.id,
+    transcript,
+    summary,
+    title,
+    fileName,
+  });
+
+  res.status(201).json({
+    message: 'Result created successfully',
+    status: 'success',
+    data,
+  });
+});
 
 module.exports = {
   createResult,

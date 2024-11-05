@@ -1,5 +1,5 @@
-const { db, query } = require("../db");
-const bcrypt = require("bcrypt");
+const { db, query } = require('../db');
+const bcrypt = require('bcrypt');
 
 async function initializeTables() {
   const checkTableQuery = `
@@ -17,7 +17,6 @@ async function initializeTables() {
         \`password\` varchar(255) NOT NULL,
         \`role\` char(36) NOT NULL,
         \`refresh_token\` LONGTEXT,
-        \`id_history\` char(36),
         PRIMARY KEY(\`id\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;`,
 
@@ -34,8 +33,10 @@ async function initializeTables() {
         \`date\` date NOT NULL,
         \`file\` varchar(255) ,
         \`id_result\` char(36) NOT NULL,
+        \`id_users\` char(36) NOT NULL,
         PRIMARY KEY (\`id\`),
-        FOREIGN KEY (\`id_result\`) REFERENCES \`result\`(\`id\`) ON DELETE CASCADE
+        FOREIGN KEY (\`id_result\`) REFERENCES \`result\`(\`id\`) ON DELETE CASCADE,
+        FOREIGN KEY (\`id_users\`) REFERENCES \`users\`(\`id\`) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;`,
   ];
 
@@ -44,7 +45,7 @@ async function initializeTables() {
       await query(createQuery);
     }
 
-    console.log("Database is ready");
+    console.log('Database is ready');
   } catch (error) {
     console.log(error);
   }

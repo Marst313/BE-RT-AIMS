@@ -1,5 +1,5 @@
-const { query } = require("../db/db");
-const { generateUuid } = require("../utils/uuid");
+const { query } = require('../db/db');
+const { generateUuid } = require('../utils/uuid');
 
 const History = {
   createHistory: async (historydata) => {
@@ -13,13 +13,7 @@ const History = {
               file, 
               id_result
             ) VALUES (?, ?, ?, ?, ?)`,
-        [
-          id,
-          historydata.title,
-          historydata.date,
-          historydata.file,
-          historydata.id_result,
-        ]
+        [id, historydata.title, historydata.date, historydata.file, historydata.id_result]
       );
       return result.insertId;
     } catch (error) {
@@ -55,8 +49,8 @@ const History = {
 
       if (!result || !result.id_result) return 0;
 
-      await query("DELETE FROM result WHERE id = ?", [result.id_result]);
-      await query("DELETE FROM history WHERE id = ?", [id]);
+      await query('DELETE FROM result WHERE id = ?', [result.id_result]);
+      await query('DELETE FROM history WHERE id = ?', [id]);
 
       return 1;
     } catch (error) {
@@ -64,7 +58,7 @@ const History = {
     }
   },
 
-  GetHistory: async function () {
+  getAllHistory: async function () {
     try {
       const result = await query(`SELECT history.id,
           history.title,
@@ -78,7 +72,7 @@ const History = {
     }
   },
 
-  getHistoryById: async (id) => {
+  getHistoryById: async (id, userId) => {
     try {
       const [result] = await query(
         `SELECT history.id AS id_history,
@@ -90,8 +84,9 @@ const History = {
                 result.summary AS summary
          FROM history
          INNER JOIN result ON history.id_result = result.id
-         WHERE history.id = ?`,
-        [id]
+         WHERE history.id = ? AND history.id_users = ?`,
+
+        [id, userId]
       );
 
       if (!result) return;
@@ -107,6 +102,30 @@ const History = {
           summary: result.summary,
         },
       };
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getMyHistory: async (userId) => {
+    try {
+      const result = await query(
+        `SELECT history.id AS id_history,
+                history.title AS title,
+                history.date AS createdAt,
+                history.file AS fileName,
+                result.id AS id_result,
+                result.transcript AS transcript,
+                result.summary AS summary
+         FROM history
+         INNER JOIN result ON history.id_result = result.id
+         WHERE history.id_users = ?`,
+        [userId]
+      );
+
+      if (!result) return;
+
+      return result;
     } catch (error) {
       throw error;
     }

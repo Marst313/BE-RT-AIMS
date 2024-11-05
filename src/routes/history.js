@@ -10,6 +10,8 @@ router
   .post(historyController.createHistory)
   .get(authController.restrictTo('admin'), historyController.getAllHistory);
 
+router.get('/my-history', historyController.getMyHistory);
+
 router
   .route('/:id') //
   .get(historyController.getHistoryById)
