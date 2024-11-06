@@ -70,7 +70,7 @@ const SignIn = catchAsync(async function (req, res, next) {
 });
 
 const SignOut = catchAsync(async function (req, res, next) {
-  const { id } = req.body;
+  const { id } = req.user;
 
   // Pastikan pengguna sudah login
   if (!id) {
