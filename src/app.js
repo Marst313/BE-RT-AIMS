@@ -18,7 +18,7 @@ config();
 app.use(
   cors({
     credentials: true,
-    origin: process.env.ORIGIN | 'http://localhost:5173',
+    origin: ['http://localhost:5173'],
   })
 );
 
