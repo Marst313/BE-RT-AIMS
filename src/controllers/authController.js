@@ -52,8 +52,8 @@ const SignIn = catchAsync(async function (req, res, next) {
   const cookieOptions = {
     expires: new Date(Date.now() + 60 * 1000),
     httpOnly: true,
-    secure: true,
-    sameSite: 'Strict',
+    secure: false,
+    sameSite: 'none',
   };
 
   res.cookie('refreshToken', refreshToken, cookieOptions);
