@@ -52,8 +52,6 @@ const SignIn = catchAsync(async function (req, res, next) {
   const cookieOptions = {
     expires: new Date(Date.now() + 60 * 1000),
     httpOnly: true,
-    secure: false,
-    sameSite: 'none',
   };
 
   res.cookie('refreshToken', refreshToken, cookieOptions);
@@ -66,6 +64,7 @@ const SignIn = catchAsync(async function (req, res, next) {
       username: user.username,
       role: user.role,
       accessToken,
+      refreshToken,
     },
   });
 });
@@ -119,6 +118,7 @@ const RefreshToken = catchAsync(async function (req, res, next) {
     message: 'Access token refreshed successfully',
     data: {
       accessToken: newAccessToken,
+      refreshToken,
     },
   });
 });
