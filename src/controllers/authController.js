@@ -64,6 +64,7 @@ const SignIn = catchAsync(async function (req, res, next) {
       id: user.id,
       email: user.email,
       username: user.username,
+      role: user.role,
       accessToken,
     },
   });
