@@ -8,7 +8,7 @@ const handleCastErrorDB = (err) => {
 
 const handleDuplicateFieldsDB = (err) => {
   const value = err.sqlMessage.split('key')[1];
-  const message = `Duplicate field value:${value} Please use value another value`;
+  const message = `Duplicate field ${value} Please use value another value`;
 
   return new AppError(message, 400);
 };
@@ -92,7 +92,7 @@ module.exports = (err, req, res, next) => {
     error.message = err.message;
 
     if (err.stack.startsWith('CastError')) error = handleCastErrorDB(error);
-    if (err.errno === 1062) error = handleDuplicateFieldsDB(err);
+    if (err.code === 'ER_DUP_ENTRY') error = handleDuplicateFieldsDB(err);
     if (err.stack.startsWith('ValidationError')) error = handleValidationErrorDB(error);
     if (err.stack.startsWith('JsonWebTokenError')) error = handleJWTError();
     if (err.stack.startsWith('TokenExpiredError')) error = handleJWTExpiredError();

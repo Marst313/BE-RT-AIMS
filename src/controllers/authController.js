@@ -52,6 +52,8 @@ const SignIn = catchAsync(async function (req, res, next) {
   const cookieOptions = {
     expires: new Date(Date.now() + 60 * 1000),
     httpOnly: true,
+    secure: process.env.NODE_ENV === 'production' ? true : false, // false for local development
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
   };
 
   res.cookie('refreshToken', refreshToken, cookieOptions);
@@ -82,7 +84,7 @@ const SignOut = catchAsync(async function (req, res, next) {
 
   // Bersihkan cookie refresh token
   res.cookie('refreshToken', 'loggedout', {
-    expires: new Date(Date.now() + 10 * 1000), // 10 detik untuk penghapusan cepat
+    expires: new Date(Date.now() + 60 * 1000 * 15),
     httpOnly: true,
     secure: true,
     sameSite: 'Strict',
@@ -113,10 +115,23 @@ const RefreshToken = catchAsync(async function (req, res, next) {
 
   const newAccessToken = generateAccessToken(user);
 
+  const cookieOptions = {
+    expires: new Date(Date.now() + 60 * 1000),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production' ? true : false, // false for local development
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+  };
+
+  res.cookie('refreshToken', refreshToken, cookieOptions);
+
   res.status(200).json({
     status: 'success',
     message: 'Access token refreshed successfully',
     data: {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role,
       accessToken: newAccessToken,
       refreshToken,
     },

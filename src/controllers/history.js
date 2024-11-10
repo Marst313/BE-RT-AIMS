@@ -75,8 +75,6 @@ const getMyHistory = async function (req, res, next) {
 
   const history = await History.getMyHistory(user.id);
 
-  if (history.length === 0) return next(new AppError('History not found', 401));
-
   res.status(200).json({
     status: 'success',
     message: 'Success get all history',
