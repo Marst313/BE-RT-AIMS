@@ -1,13 +1,17 @@
 const router = require('express').Router();
-const { SignUp, SignIn, SignOut, RefreshToken } = require('../controllers/authController');
+
 const authController = require('../controllers/authController');
+const userController = require('../controllers/users');
 
-router.post('/sign-up', SignUp);
-router.post('/sign-in', SignIn);
+router.post('/sign-up', authController.SignUp);
+router.post('/sign-in', authController.SignIn);
 
-router.post('/refresh-token', RefreshToken);
+router.post('/refresh-token', authController.RefreshToken);
 
 router.use(authController.protect);
-router.delete('/sign-out', SignOut);
+
+router.patch('/update-profile', userController.updateMyProfile);
+router.patch('/update-user', userController.updateUserProfile);
+router.delete('/sign-out', authController.SignOut);
 
 module.exports = router;

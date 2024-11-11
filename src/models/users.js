@@ -55,6 +55,15 @@ const Users = {
       throw error;
     }
   },
+
+  updateUserProfile: async function (currentEmail, updateData) {
+    try {
+      const result = await query(`UPDATE users SET username = ?, email = ? WHERE email = ?`, [updateData.username, updateData.email, currentEmail]);
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 module.exports = Users;
