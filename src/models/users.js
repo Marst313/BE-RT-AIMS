@@ -36,6 +36,16 @@ const Users = {
     }
   },
 
+  getAllUser: async function () {
+    try {
+      const result = await query(`SELECT id, username, email FROM users WHERE role = ?`, ['user']);
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   storeRefreshToken: async function (id, refreshToken) {
     try {
       const result = await query(`UPDATE users SET refresh_token = ? WHERE id = ?`, [refreshToken, id]);

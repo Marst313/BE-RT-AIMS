@@ -2,6 +2,18 @@ const Users = require('../models/users');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
+const getAllUser = catchAsync(async function (req, res, next) {
+  const data = await Users.getAllUser();
+
+  console.log(data);
+
+  res.status(200).json({
+    message: 'Get all users',
+    status: 'success',
+    data,
+  });
+});
+
 const updateMyProfile = catchAsync(async function (req, res, next) {
   const { email, username } = req.user;
 
@@ -13,7 +25,6 @@ const updateMyProfile = catchAsync(async function (req, res, next) {
     return next(new AppError('Failed to update profile', 400));
   }
 
-  // Menanggapi permintaan dengan pesan sukses
   res.status(200).json({
     message: 'Profile updated successfully',
     status: 'success',
@@ -62,4 +73,5 @@ const updateUserProfile = catchAsync(async function (req, res, next) {
 module.exports = {
   updateMyProfile,
   updateUserProfile,
+  getAllUser,
 };
