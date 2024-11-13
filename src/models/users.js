@@ -38,9 +38,41 @@ const Users = {
 
   getAllUser: async function () {
     try {
-      const result = await query(`SELECT id, username, email FROM users WHERE role = ?`, ['user']);
+      const result = await query(
+        `SELECT 
+          users.id AS user_id,
+          users.username,
+          users.email,
+          history.id AS history_id,
+          history.title,
+          history.date
+        FROM users
+        LEFT JOIN history ON users.id = history.id_users
+        WHERE users.role = ?
+      `,
+        ['user']
+      );
 
-      return result;
+      const usersMap = new Map();
+
+      result.forEach((row) => {
+        const { user_id, username, email, history_id, title, date } = row;
+
+        if (!usersMap.has(user_id)) {
+          usersMap.set(user_id, {
+            user_id,
+            username,
+            email,
+            history: [],
+          });
+        }
+
+        if (history_id) {
+          usersMap.get(user_id).history.push({ history_id, title, date });
+        }
+      });
+
+      return Array.from(usersMap.values());
     } catch (error) {
       throw error;
     }

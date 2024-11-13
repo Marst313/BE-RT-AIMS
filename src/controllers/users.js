@@ -5,8 +5,6 @@ const catchAsync = require('../utils/catchAsync');
 const getAllUser = catchAsync(async function (req, res, next) {
   const data = await Users.getAllUser();
 
-  console.log(data);
-
   res.status(200).json({
     message: 'Get all users',
     status: 'success',
