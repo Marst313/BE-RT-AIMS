@@ -8,7 +8,7 @@ const handleCastErrorDB = (err) => {
 
 const handleDuplicateFieldsDB = (err) => {
   const value = err.sqlMessage.split('key')[1];
-  const message = `Duplicate field ${value} Please use value another value`;
+  const message = `Duplicate field ${value} Please use another value`;
 
   return new AppError(message, 400);
 };

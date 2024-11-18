@@ -60,6 +60,7 @@ const SignIn = catchAsync(async function (req, res, next) {
 
   res.status(200).json({
     message: 'Login successful',
+    status: 'success',
     data: {
       id: user.id,
       email: user.email,
@@ -118,7 +119,7 @@ const RefreshToken = catchAsync(async function (req, res, next) {
   const cookieOptions = {
     expires: new Date(Date.now() + 60 * 1000),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' ? true : false, // false for local development
+    secure: process.env.NODE_ENV === 'production' ? true : false,
     sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
   };
 
