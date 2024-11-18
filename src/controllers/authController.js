@@ -50,7 +50,7 @@ const SignIn = catchAsync(async function (req, res, next) {
   await Users.storeRefreshToken(user.id, refreshToken);
 
   const cookieOptions = {
-    expires: new Date(Date.now() + 60 * 1000),
+    expires: new Date(Date.now() + 60 * 1000 * 60 * 24 * 7),
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production' ? true : false, // false for local development
     sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
@@ -117,7 +117,7 @@ const RefreshToken = catchAsync(async function (req, res, next) {
   const newAccessToken = generateAccessToken(user);
 
   const cookieOptions = {
-    expires: new Date(Date.now() + 60 * 1000),
+    expires: new Date(Date.now() + 60 * 1000 * 60 * 24 * 7),
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production' ? true : false,
     sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',

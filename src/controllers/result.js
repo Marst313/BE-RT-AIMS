@@ -5,9 +5,11 @@ const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
 const createResult = catchAsync(async function (req, res, next) {
-  const { transcript, summary, title, fileName } = req.body;
+  const { transcript, summary, title } = req.body;
 
-  if (!transcript || !summary || !title || !fileName) {
+  console.log(req.body);
+
+  if (!transcript || !summary || !title) {
     return next(new AppError('All fields cannot be empty', 403));
   }
 
@@ -23,7 +25,6 @@ const createResult = catchAsync(async function (req, res, next) {
     transcript,
     summary,
     title,
-    fileName,
   });
 
   res.status(201).json({

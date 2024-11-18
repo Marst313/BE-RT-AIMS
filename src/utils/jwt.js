@@ -15,7 +15,7 @@ const publicKey = fs.readFileSync(publicKeypath, 'utf8');
 let signOptions = {
   issuer: config.issuer,
   audience: config.audience,
-  expiresIn: '5m',
+  expiresIn: '1d',
   algorithm: 'RS256',
 };
 
@@ -50,7 +50,7 @@ function verifyJWT(token) {
   var verifyOptions = {
     issuer: config.issuer,
     audience: config.audience,
-    expiresIn: '1h',
+    expiresIn: '1d',
     algorithm: ['RS256'],
   };
   try {

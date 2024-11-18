@@ -78,7 +78,6 @@ const History = {
         `SELECT history.id AS id_history,
                 history.title AS title,
                 history.date AS createdAt,
-                history.file AS fileName,
                 result.id AS id_result,
                 result.transcript AS transcript,
                 result.summary AS summary
@@ -95,7 +94,6 @@ const History = {
         id_history: result.id_history,
         title: result.title,
         createdAt: result.createdAt,
-        fileName: result.fileName,
         result: {
           id_result: result.id_result,
           transcript: result.transcript,
@@ -113,7 +111,6 @@ const History = {
         `SELECT history.id AS id_history,
                 history.title AS title,
                 history.date AS createdAt,
-                history.file AS fileName,
                 result.id AS id_result,
                 result.transcript AS transcript,
                 result.summary AS summary

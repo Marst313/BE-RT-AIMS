@@ -17,15 +17,14 @@ const Result = {
       const today = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
       await query(
-        `INSERT INTO history (id, title, date, file, id_result, id_users)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [idHistory, resultData.title, today, resultData.fileName, idResult, resultData.id]
+        `INSERT INTO history (id, title, date,  id_result, id_users)
+         VALUES (?, ?, ?, ?, ?)`,
+        [idHistory, resultData.title, today, idResult, resultData.id]
       );
 
       return {
         id: idResult,
         title: resultData.title,
-        fileName: resultData.fileName,
         id_history: idHistory,
       };
     } catch (error) {

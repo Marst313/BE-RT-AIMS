@@ -22,8 +22,8 @@ async function initializeTables() {
 
     `CREATE TABLE IF NOT EXISTS \`result\` (
         \`id\` char(36) NOT NULL,
-        \`transcript\` varchar(255) NOT NULL,
-        \`summary\` varchar(255) NOT NULL,
+        \`transcript\` LONGTEXT NOT NULL,
+        \`summary\` LONGTEXT NOT NULL,
         PRIMARY KEY (\`id\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;`,
 
@@ -31,7 +31,6 @@ async function initializeTables() {
         \`id\` char(36) NOT NULL,
         \`title\` varchar(255) NOT NULL,
         \`date\` date NOT NULL,
-        \`file\` varchar(255) ,
         \`id_result\` char(36) NOT NULL,
         \`id_users\` char(36) NOT NULL,
         PRIMARY KEY (\`id\`),
