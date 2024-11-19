@@ -7,8 +7,6 @@ const catchAsync = require('../utils/catchAsync');
 const createResult = catchAsync(async function (req, res, next) {
   const { transcript, summary, title } = req.body;
 
-  console.log(req.body);
-
   if (!transcript || !summary || !title) {
     return next(new AppError('All fields cannot be empty', 403));
   }
@@ -29,7 +27,7 @@ const createResult = catchAsync(async function (req, res, next) {
 
   res.status(201).json({
     message: 'Result created successfully',
-    status: 'success',
+    status: 'Success',
     data,
   });
 });
