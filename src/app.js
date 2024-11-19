@@ -17,7 +17,7 @@ config();
 // ! USE CORS FOR SAFETY
 app.use(
   cors({
-    credentials: true,
+    // credentials: true,
     origin: ['http://localhost:5173'],
   })
 );
