@@ -1,5 +1,5 @@
-const { query } = require('../db/db');
-const { generateUuid } = require('../utils/uuid');
+const { query } = require("../db/db");
+const { generateUuid } = require("../utils/uuid");
 
 const Users = {
   createUser: async function (userData) {
@@ -28,7 +28,10 @@ const Users = {
 
   getUserByEmail: async function (email) {
     try {
-      const [result] = await query(`SELECT id, username, email, password, role, refresh_token FROM users WHERE email = ?`, [email]);
+      const [result] = await query(
+        `SELECT id, username, email, password, role, refresh_token FROM users WHERE email = ?`,
+        [email]
+      );
 
       return result;
     } catch (error) {
@@ -50,7 +53,7 @@ const Users = {
         LEFT JOIN history ON users.id = history.id_users
         WHERE users.role = ?
       `,
-        ['user']
+        ["user"]
       );
 
       const usersMap = new Map();
@@ -80,7 +83,10 @@ const Users = {
 
   storeRefreshToken: async function (id, refreshToken) {
     try {
-      const result = await query(`UPDATE users SET refresh_token = ? WHERE id = ?`, [refreshToken, id]);
+      const result = await query(
+        `UPDATE users SET refresh_token = ? WHERE id = ?`,
+        [refreshToken, id]
+      );
 
       return result.affectedRows > 0;
     } catch (error) {
@@ -90,7 +96,10 @@ const Users = {
 
   removeRefreshToken: async function (id) {
     try {
-      const result = await query(`UPDATE users SET refresh_token = null where id = ?`, [id]);
+      const result = await query(
+        `UPDATE users SET refresh_token = null where id = ?`,
+        [id]
+      );
 
       return result.affectedRows > 0;
     } catch (error) {
@@ -100,8 +109,43 @@ const Users = {
 
   updateUserProfile: async function (currentEmail, updateData) {
     try {
-      const result = await query(`UPDATE users SET username = ?, email = ? WHERE email = ?`, [updateData.username, updateData.email, currentEmail]);
+      const result = await query(
+        `UPDATE users SET username = ?, email = ? WHERE email = ?`,
+        [updateData.username, updateData.email, currentEmail]
+      );
       return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  findOrCreateGoogleUser: async function (profile) {
+    const { id, displayName, emails } = profile;
+    const email = emails[0].value;
+
+    try {
+      const user = await query(
+        `SELECT id, username, email, role, refresh_token FROM users WHERE email = ?`,
+        [email]
+      );
+
+      if (user.length > 0) {
+        return user[0]; // Existing user
+      }
+
+      const newUser = {
+        id: generateUuid(),
+        username: displayName,
+        email,
+        role: "user",
+      };
+
+      const result = await query(
+        `INSERT INTO users(id, username, email, role) VALUES(?, ?, ?, ?)`,
+        [newUser.id, newUser.username, newUser.email, newUser.role]
+      );
+
+      return newUser;
     } catch (error) {
       throw error;
     }
