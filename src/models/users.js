@@ -150,6 +150,41 @@ const Users = {
       throw error;
     }
   },
+
+  deleteUsers: async (id) => {
+    try {
+      const [user] = await query("SELECT role FROM users WHERE id = ?", [id]);
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      if (user.role === "admin") {
+        return { success: false, message: "Admin users cannot be deleted" };
+      }
+
+      const results = await query(
+        `SELECT result.id 
+         FROM history
+         INNER JOIN result ON history.id_result = result.id
+         WHERE history.id_users = ?`,
+        [id]
+      );
+
+      if (results.length > 0) {
+        const ids = results.map((res) => `'${res.id}'`);
+        await query(`DELETE FROM result WHERE id IN (${ids.join(",")})`);
+      }
+
+      await query("DELETE FROM history WHERE id_users = ?", [id]);
+
+      await query("DELETE FROM users WHERE id = ?", [id]);
+
+      return { success: true, message: "User deleted successfully" };
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 module.exports = Users;
