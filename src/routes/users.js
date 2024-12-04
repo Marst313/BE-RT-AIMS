@@ -18,5 +18,10 @@ router.get("/", authController.restrictTo("admin"), userController.getAllUser);
 router.patch("/update-profile", userController.updateMyProfile);
 router.patch("/update-user", userController.updateUserProfile);
 router.delete("/sign-out", authController.SignOut);
+router.delete(
+  "/:id",
+  authController.restrictTo("admin"),
+  userController.deleteUsers
+);
 
 module.exports = router;
