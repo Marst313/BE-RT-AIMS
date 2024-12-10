@@ -85,14 +85,18 @@ const getMyHistory = async function (req, res, next) {
 
 const updateHistory = catchAsync(async function (req, res, next) {
   const { id } = req.params;
-  const { title } = req.body;
+  const { title, date, file } = req.body;
+
+  if (!title && !date && !file) {
+    return next(new AppError('Please provide at least one field to update', 400));
+  }
 
   const user = await User.getUserByEmail(req.user.email);
   if (!user) {
     return next(new AppError('Invalid access token', 403));
   }
 
-  const result = await History.updateHistory(id, { title });
+  const result = await History.updateHistory(id, { title, date, file });
   if (!result.affectedRows) {
     return next(new AppError('History not found', 404));
   }

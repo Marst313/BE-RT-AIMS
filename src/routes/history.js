@@ -15,7 +15,7 @@ router.get('/my-history', historyController.getMyHistory);
 router
   .route('/:id') //
   .get(historyController.getHistoryById)
-  .patch(historyController.updateHistory)
+  .put(historyController.updateHistory)
   .delete(historyController.deleteHistory);
 
 module.exports = router;

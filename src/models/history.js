@@ -24,11 +24,12 @@ const History = {
     try {
       const result = await query(
         `UPDATE history SET
-        title = ?
+        title = ?, 
+        date = ?, 
+        file = ? 
         WHERE id = ?`,
-        [historydata.title, historyid]
+        [historydata.title, historydata.date, historydata.file, historyid]
       );
-
       return result;
     } catch (error) {
       throw error;
@@ -61,7 +62,8 @@ const History = {
     try {
       const result = await query(`SELECT history.id,
           history.title,
-          history.date
+          history.date,
+          history.file
           FROM history 
           INNER JOIN result ON history.id_result = result.id;`);
       return result;
