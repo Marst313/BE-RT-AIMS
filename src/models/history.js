@@ -1,5 +1,5 @@
-const { query } = require('../db/db');
-const { generateUuid } = require('../utils/uuid');
+const { query } = require("../db/db");
+const { generateUuid } = require("../utils/uuid");
 
 const History = {
   createHistory: async (historydata) => {
@@ -13,7 +13,13 @@ const History = {
               file, 
               id_result
             ) VALUES (?, ?, ?, ?, ?)`,
-        [id, historydata.title, historydata.date, historydata.file, historydata.id_result]
+        [
+          id,
+          historydata.title,
+          historydata.date,
+          historydata.file,
+          historydata.id_result,
+        ]
       );
       return result.insertId;
     } catch (error) {
@@ -49,8 +55,8 @@ const History = {
 
       if (!result || !result.id_result) return 0;
 
-      await query('DELETE FROM result WHERE id = ?', [result.id_result]);
-      await query('DELETE FROM history WHERE id = ?', [id]);
+      await query("DELETE FROM result WHERE id = ?", [result.id_result]);
+      await query("DELETE FROM history WHERE id = ?", [id]);
 
       return 1;
     } catch (error) {
@@ -58,14 +64,18 @@ const History = {
     }
   },
 
-  getAllHistory: async function () {
+  getAllHistory: async (id_users) => {
     try {
-      const result = await query(`SELECT history.id,
-          history.title,
-          history.date,
-          history.file
-          FROM history 
-          INNER JOIN result ON history.id_result = result.id;`);
+      const result = await query(
+        `SELECT history.id AS id_history,
+                history.title AS title,
+                history.date AS createdAt,
+                history.file AS file
+         FROM history
+         INNER JOIN result ON history.id_result = result.id
+         WHERE history.id_users = ?`,
+        [id_users]
+      );
       return result;
     } catch (error) {
       throw error;
