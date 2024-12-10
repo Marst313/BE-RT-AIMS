@@ -1,20 +1,27 @@
-const Users = require("../models/users");
-const passport = require("passport");
+const Users = require('../models/users');
+const { default: axios } = require('axios');
 
-const catchAsync = require("../utils/catchAsync");
-const { hashPassword, verifyPassword } = require("../utils/bcrypt");
-const AppError = require("../utils/appError");
-const {
-  verifyJWT,
-  generateAccessToken,
-  generateRefreshToken,
-} = require("../utils/jwt");
+const catchAsync = require('../utils/catchAsync');
+const { hashPassword, verifyPassword, createPasswordResetToken, createHashedToken } = require('../utils/bcrypt');
+const AppError = require('../utils/appError');
+const { verifyJWT, generateAccessToken, generateRefreshToken } = require('../utils/jwt');
+
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  host: 'sandbox.smtp.mailtrap.io',
+  port: 2525,
+  auth: {
+    user: '396d6d46538570',
+    pass: '8d61afa9b61ca6',
+  },
+});
 
 const SignUp = catchAsync(async function (req, res, next) {
   const { username, email, password } = req.body;
 
   if (!username || !email || !password) {
-    return next(new AppError("All fields are required", 400));
+    return next(new AppError('All fields are required', 400));
   }
 
   const hashedPassword = await hashPassword(password);
@@ -22,8 +29,8 @@ const SignUp = catchAsync(async function (req, res, next) {
   await Users.createUser({ ...req.body, password: hashedPassword });
 
   return res.status(201).json({
-    status: "success",
-    message: "User created successfully",
+    status: 'success',
+    message: 'User created successfully',
   });
 });
 
@@ -32,18 +39,18 @@ const SignIn = catchAsync(async function (req, res, next) {
 
   // ! INPUT VALIDATION
   if (!email || !password) {
-    return next(new AppError("Email and password are required", 400));
+    return next(new AppError('Email and password are required', 400));
   }
   // ! FIND USERS
   const user = await Users.getUserByEmail(email);
   if (!user) {
-    return next(new AppError("Incorrect email or password!", 401));
+    return next(new AppError('Incorrect email or password!', 401));
   }
 
   // ! VALIDATE PASSWORD
   const isValidPassword = await verifyPassword(password, user.password);
   if (!isValidPassword) {
-    return next(new AppError("Incorrect email or password!", 401));
+    return next(new AppError('Incorrect email or password!', 401));
   }
 
   // ! REMOVE PASSWORD
@@ -57,15 +64,15 @@ const SignIn = catchAsync(async function (req, res, next) {
   const cookieOptions = {
     expires: new Date(Date.now() + 60 * 1000 * 60 * 24 * 7),
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production" ? true : false, // false for local development
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    secure: process.env.NODE_ENV === 'production' ? true : false,
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
   };
 
-  res.cookie("refreshToken", refreshToken, cookieOptions);
+  res.cookie('refreshToken', refreshToken, cookieOptions);
 
   res.status(200).json({
-    message: "Login successful",
-    status: "success",
+    message: 'Login successful',
+    status: 'success',
     data: {
       id: user.id,
       email: user.email,
@@ -77,62 +84,65 @@ const SignIn = catchAsync(async function (req, res, next) {
   });
 });
 
-const SignOut = catchAsync(async function (req, res, next) {
-  const { id } = req.user;
+const SignInGoogle = catchAsync(async function (req, res, next) {
+  const { accessToken } = req.query;
 
-  // Pastikan pengguna sudah login
-  if (!id) {
-    return next(new AppError("User ID is required to log out", 400));
+  // ! VALIDATE INPUT
+  if (!accessToken) {
+    return next(new AppError('Access token is required', 400));
   }
 
-  // Hapus refresh token di database
-  await Users.removeRefreshToken(id);
-
-  // Bersihkan cookie refresh token
-  res.cookie("refreshToken", "loggedout", {
-    expires: new Date(Date.now() + 60 * 1000 * 15),
-    httpOnly: true,
-    secure: true,
-    sameSite: "Strict",
+  // ! REQUEST GOOGLE USER INFO
+  const response = await axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${accessToken}`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
   });
 
-  res.clearCookie("refreshToken");
+  const googleUser = response.data;
 
-  return res.status(200).json({
-    status: "success",
-    message: "Logged out successfully",
-  });
-});
-
-const RefreshToken = catchAsync(async function (req, res, next) {
-  const refreshToken = req.cookies.refreshToken;
-
-  if (!refreshToken) {
-    return next(new AppError("No refresh token provided", 401));
+  // ! VALIDATE GOOGLE USER INFO
+  if (!googleUser.email) {
+    return next(new AppError('Google account email is required', 400));
   }
 
-  const decoded = verifyJWT(refreshToken);
+  // ! CHECK IF USER EXISTS
+  const user = await Users.getUserByEmail(googleUser.email);
 
-  const user = await Users.getUserByEmail(decoded.email);
-
-  if (!user || user.refresh_token !== refreshToken) {
-    return next(new AppError("Invalid refresh token", 403));
+  if (!user) {
+    // ! CREATE NEW USER IF NOT EXISTS
+    user = await Users.createUser({
+      email: googleUser.email,
+      username: googleUser.name || googleUser.email.split('@')[0],
+      role: 'user',
+      password: null,
+    });
   }
 
+  // ! REMOVE PASSWORD
+  user.password = undefined;
+
+  // ! GENERATE TOKENS
   const newAccessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
 
+  // ! STORE REFRESH TOKEN
+  await Users.storeRefreshToken(user.id, refreshToken);
+
+  // ! SET REFRESH TOKEN COOKIE
   const cookieOptions = {
     expires: new Date(Date.now() + 60 * 1000 * 60 * 24 * 7),
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production" ? true : false,
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
   };
 
-  res.cookie("refreshToken", refreshToken, cookieOptions);
+  res.cookie('refreshToken', refreshToken, cookieOptions);
 
+  // ! RESPONSE
   res.status(200).json({
-    status: "success",
-    message: "Access token refreshed successfully",
+    status: 'success',
+    message: 'Login successful',
     data: {
       id: user.id,
       email: user.email,
@@ -144,38 +154,161 @@ const RefreshToken = catchAsync(async function (req, res, next) {
   });
 });
 
+const SignOut = catchAsync(async function (req, res, next) {
+  const { id } = req.user;
+
+  // Pastikan pengguna sudah login
+  if (!id) {
+    return next(new AppError('User ID is required to log out', 400));
+  }
+
+  await Users.removeRefreshToken(id);
+
+  res.cookie('refreshToken', 'loggedout', {
+    expires: new Date(Date.now() + 60 * 1000 * 15),
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Strict',
+  });
+
+  res.clearCookie('refreshToken');
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'Logged out successfully',
+  });
+});
+
+const RefreshToken = catchAsync(async function (req, res, next) {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return next(new AppError('No refresh token provided', 401));
+  }
+
+  const decoded = verifyJWT(refreshToken);
+
+  const user = await Users.getUserByEmail(decoded.email);
+
+  if (!user || user.refresh_token !== refreshToken) {
+    return next(new AppError('Invalid refresh token', 403));
+  }
+
+  const newAccessToken = generateAccessToken(user);
+
+  const cookieOptions = {
+    expires: new Date(Date.now() + 60 * 1000 * 60 * 24 * 7),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production' ? true : false,
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+  };
+
+  res.cookie('refreshToken', refreshToken, cookieOptions);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Access token refreshed successfully',
+    data: {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      accessToken: newAccessToken,
+      refreshToken,
+    },
+  });
+});
+
+const ForgetPassword = catchAsync(async function (req, res, next) {
+  const { email } = req.body;
+
+  if (!email) {
+    return next(new AppError('Please provide an email address', 400));
+  }
+
+  const user = await Users.getUserByEmail(email);
+
+  if (!user) {
+    return next(new AppError('Cannot send to that email', 404));
+  }
+
+  async function sendEmailResetToken(to, resetToken) {
+    const resetURL = `${process.env.ORIGIN}/forgot-password/${resetToken}`;
+    const info = await transporter.sendMail({
+      from: '"Support Team" <karmadharmanalendra@gmail.com>',
+      to,
+      subject: 'Password Reset Request',
+      text: `You requested a password reset. Click the link to reset your password: ${resetURL}`,
+      html: `<p>You requested a password reset. Click <a href="${resetURL}">here</a> to reset your password.</p>`,
+    });
+  }
+
+  // ! Generate reset token
+  const resetToken = await createPasswordResetToken(user.id);
+
+  // ! Send email
+  await sendEmailResetToken(user.email, resetToken);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Reset token sent to email!',
+  });
+});
+
+const ResetPassword = catchAsync(async (req, res, next) => {
+  const { password, confirmPassword } = req.body;
+
+  // ! Validate inputs
+  if (!password || !confirmPassword) {
+    return next(new AppError('Please provide both password and confirm password', 400));
+  }
+
+  if (password !== confirmPassword) {
+    return next(new AppError('Passwords do not match', 400));
+  }
+
+  // ! Hash the token for validation
+  const hashedToken = await createHashedToken(req.params.token);
+
+  // ! Validate token and expiration
+  const user = await Users.getUserByToken(hashedToken);
+
+  if (!user) {
+    return next(new AppError('Invalid or expired token', 400));
+  }
+
+  // ! Hash the new password
+  const hashedPassword = await hashPassword(password);
+
+  // ! Update the user's password and clear reset fields
+  await Users.updatePassword(hashedPassword, user.id);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Password successfully updated',
+  });
+});
+
 const protect = catchAsync(async function (req, res, next) {
   let token;
 
   // ! 1. GET TOKEN AND CHECK IF THERE IS TOKEN
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
   } else if (req.cookies.refreshToken) {
     token = req.cookies.jwt;
   }
 
   if (!token) {
-    return next(new AppError("Please log in to get access!", 401));
+    return next(new AppError('Please log in to get access!', 401));
   }
 
   const decoded = verifyJWT(token);
   const currentUser = await Users.getUserByEmail(decoded.email);
 
   if (!currentUser) {
-    return next(
-      new AppError("The user belonging to this token does no longer exist", 401)
-    );
+    return next(new AppError('The user belonging to this token does no longer exist', 401));
   }
-
-  // 4. Check if user changed password after the token was issued
-  /*  if (await currentUser.changedPasswordAfter(decoded.iat)) {
-    return next(
-      new AppError('User recently changed password! Please login again!', 401),
-    );
-  } */
 
   // ! GRANT ACCESS TO PROTECTED ROUTE
   req.user = currentUser;
@@ -190,75 +323,21 @@ const protect = catchAsync(async function (req, res, next) {
 const restrictTo = function (...roles) {
   return function (req, res, next) {
     if (!roles.includes(req.user.role.toLowerCase())) {
-      return next(
-        new AppError("You do not have permission to perform this action", 403)
-      );
+      return next(new AppError('You do not have permission to perform this action', 403));
     }
 
     next();
   };
 };
 
-const googleSignIn = catchAsync(async (req, res, next) => {
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-  })(req, res, next);
-});
-
-const googleCallback = catchAsync(async (req, res, next) => {
-  passport.authenticate("google", {
-    failureRedirect: "/login",
-    session: false,
-  })(req, res, async () => {
-    // Pastikan 'authenticate' dipanggil dengan '(req, res, next)'
-    const user = req.user;
-
-    if (!user) {
-      return next(
-        new AppError("User not found after Google authentication", 404)
-      );
-    }
-
-    // Buat token akses dan refresh token
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    // Simpan refresh token ke database
-    await Users.storeRefreshToken(user.id, refreshToken);
-
-    // Atur opsi cookie
-    const cookieOptions = {
-      expires: new Date(Date.now() + 60 * 1000 * 60 * 24 * 7), // 7 hari
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    };
-
-    // Kirim refresh token melalui cookie
-    res.cookie("refreshToken", refreshToken, cookieOptions);
-
-    // Kirim respons ke klien
-    res.status(200).json({
-      message: "Google login successful",
-      status: "success",
-      data: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        role: user.role,
-        accessToken,
-      },
-    });
-  });
-});
-
 module.exports = {
   SignUp,
   SignIn,
+  SignInGoogle,
   SignOut,
   RefreshToken,
+  ForgetPassword,
+  ResetPassword,
   protect,
   restrictTo,
-  googleSignIn,
-  googleCallback,
 };

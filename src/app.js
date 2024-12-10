@@ -2,9 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const { config } = require('dotenv');
 const cookieParser = require('cookie-parser');
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const Users = require('./models/users');
 
 const app = express();
 
@@ -21,7 +18,7 @@ config();
 app.use(
   cors({
     credentials: true,
-    origin: ['http://localhost:5173'],
+    origin: ['http://localhost:5173', 'https://accounts.google.com'],
   })
 );
 
@@ -41,25 +38,6 @@ app.use(xss());
 
 // ! PARSING COOKIE
 app.use(cookieParser());
-
-// Initialize Passport.js
-app.use(passport.initialize());
-
-// Google OAuth Strategy
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:3000/api/v1/user/google/callback",
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      // Handle user authentication and creation in DB
-      const user = await Users.findOrCreateGoogleUser(profile);
-      done(null, user);
-    }
-  )
-);
 
 // ! ROUTING OR ENDPOINT
 app.use(router);

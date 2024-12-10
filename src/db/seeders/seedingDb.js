@@ -10,28 +10,30 @@ async function initializeTables() {
 
   const createNewTableQuery = [
     `CREATE TABLE IF NOT EXISTS \`users\` (
-        \`id\` char(36) NOT NULL,
-        \`username\` varchar(255) NOT NULL,
-        \`email\` varchar(255) NOT NULL UNIQUE,
-        \`password\` varchar(255) NOT NULL,
-        \`role\` char(36) NOT NULL,
+        \`id\` CHAR(36) NOT NULL,
+        \`username\` VARCHAR(255) NOT NULL,
+        \`email\` VARCHAR(255) NOT NULL UNIQUE,
+        \`password\` VARCHAR(255),
+        \`role\` CHAR(36) NOT NULL,
         \`refresh_token\` LONGTEXT,
+        \`password_reset_token\` VARCHAR(255),
+        \`password_reset_expires\` DATETIME,
         PRIMARY KEY(\`id\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;`,
 
     `CREATE TABLE IF NOT EXISTS \`result\` (
-        \`id\` char(36) NOT NULL,
+        \`id\` CHAR(36) NOT NULL,
         \`transcript\` LONGTEXT NOT NULL,
         \`summary\` LONGTEXT NOT NULL,
         PRIMARY KEY (\`id\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;`,
 
     `CREATE TABLE IF NOT EXISTS \`history\` (
-        \`id\` char(36) NOT NULL,
-        \`title\` varchar(255) NOT NULL,
+        \`id\` CHAR(36) NOT NULL,
+        \`title\` VARCHAR(255) NOT NULL,
         \`date\` date NOT NULL,
-        \`id_result\` char(36) NOT NULL,
-        \`id_users\` char(36) NOT NULL,
+        \`id_result\` CHAR(36) NOT NULL,
+        \`id_users\` CHAR(36) NOT NULL,
         PRIMARY KEY (\`id\`),
         FOREIGN KEY (\`id_result\`) REFERENCES \`result\`(\`id\`) ON DELETE CASCADE,
         FOREIGN KEY (\`id_users\`) REFERENCES \`users\`(\`id\`) ON DELETE CASCADE

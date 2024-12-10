@@ -1,5 +1,5 @@
-const { query } = require("../db/db");
-const { generateUuid } = require("../utils/uuid");
+const { query } = require('../db/db');
+const { generateUuid } = require('../utils/uuid');
 
 const Users = {
   createUser: async function (userData) {
@@ -28,10 +28,7 @@ const Users = {
 
   getUserByEmail: async function (email) {
     try {
-      const [result] = await query(
-        `SELECT id, username, email, password, role, refresh_token FROM users WHERE email = ?`,
-        [email]
-      );
+      const [result] = await query(`SELECT id, username, email, password, role, refresh_token FROM users WHERE email = ?`, [email]);
 
       return result;
     } catch (error) {
@@ -53,7 +50,7 @@ const Users = {
         LEFT JOIN history ON users.id = history.id_users
         WHERE users.role = ?
       `,
-        ["user"]
+        ['user']
       );
 
       const usersMap = new Map();
@@ -83,10 +80,7 @@ const Users = {
 
   storeRefreshToken: async function (id, refreshToken) {
     try {
-      const result = await query(
-        `UPDATE users SET refresh_token = ? WHERE id = ?`,
-        [refreshToken, id]
-      );
+      const result = await query(`UPDATE users SET refresh_token = ? WHERE id = ?`, [refreshToken, id]);
 
       return result.affectedRows > 0;
     } catch (error) {
@@ -96,10 +90,7 @@ const Users = {
 
   removeRefreshToken: async function (id) {
     try {
-      const result = await query(
-        `UPDATE users SET refresh_token = null where id = ?`,
-        [id]
-      );
+      const result = await query(`UPDATE users SET refresh_token = null where id = ?`, [id]);
 
       return result.affectedRows > 0;
     } catch (error) {
@@ -109,10 +100,7 @@ const Users = {
 
   updateUserProfile: async function (currentEmail, updateData) {
     try {
-      const result = await query(
-        `UPDATE users SET username = ?, email = ? WHERE email = ?`,
-        [updateData.username, updateData.email, currentEmail]
-      );
+      const result = await query(`UPDATE users SET username = ?, email = ? WHERE email = ?`, [updateData.username, updateData.email, currentEmail]);
       return result;
     } catch (error) {
       throw error;
@@ -120,14 +108,11 @@ const Users = {
   },
 
   findOrCreateGoogleUser: async function (profile) {
-    const { id, displayName, emails } = profile;
+    const { displayName, emails } = profile;
     const email = emails[0].value;
 
     try {
-      const user = await query(
-        `SELECT id, username, email, role, refresh_token FROM users WHERE email = ?`,
-        [email]
-      );
+      const user = await query(`SELECT id, username, email, role, refresh_token FROM users WHERE email = ?`, [email]);
 
       if (user.length > 0) {
         return user[0]; // Existing user
@@ -137,13 +122,10 @@ const Users = {
         id: generateUuid(),
         username: displayName,
         email,
-        role: "user",
+        role: 'user',
       };
 
-      const result = await query(
-        `INSERT INTO users(id, username, email, role) VALUES(?, ?, ?, ?)`,
-        [newUser.id, newUser.username, newUser.email, newUser.role]
-      );
+      await query(`INSERT INTO users(id, username, email, role) VALUES(?, ?, ?, ?)`, [newUser.id, newUser.username, newUser.email, newUser.role]);
 
       return newUser;
     } catch (error) {
@@ -151,16 +133,50 @@ const Users = {
     }
   },
 
-  deleteUsers: async (id) => {
+  getUserByToken: async (token) => {
     try {
-      const [user] = await query("SELECT role FROM users WHERE id = ?", [id]);
-
-      if (!user) {
-        throw new Error("User not found");
+      if (!token) {
+        throw new Error('Token is required');
       }
 
-      if (user.role === "admin") {
-        return { success: false, message: "Admin users cannot be deleted" };
+      const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+      const [user] = await query('SELECT id, role, email FROM users WHERE password_reset_token = ?', [token]);
+
+      if (!user) {
+        throw new Error('User not found or token expired');
+      }
+
+      if (user.role === 'admin') {
+        throw new Error('Admin cannot reset passwords');
+      }
+
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updatePassword: async (hashedPassword, userID) => {
+    try {
+      const result = await query('UPDATE users SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?', [hashedPassword, userID]);
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteUsers: async (id) => {
+    try {
+      const [user] = await query('SELECT role FROM users WHERE id = ?', [id]);
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      if (user.role === 'admin') {
+        return { success: false, message: 'Admin users cannot be deleted' };
       }
 
       const results = await query(
@@ -173,14 +189,14 @@ const Users = {
 
       if (results.length > 0) {
         const ids = results.map((res) => `'${res.id}'`);
-        await query(`DELETE FROM result WHERE id IN (${ids.join(",")})`);
+        await query(`DELETE FROM result WHERE id IN (${ids.join(',')})`);
       }
 
-      await query("DELETE FROM history WHERE id_users = ?", [id]);
+      await query('DELETE FROM history WHERE id_users = ?', [id]);
 
-      await query("DELETE FROM users WHERE id = ?", [id]);
+      await query('DELETE FROM users WHERE id = ?', [id]);
 
-      return { success: true, message: "User deleted successfully" };
+      return { success: true, message: 'User deleted successfully' };
     } catch (error) {
       throw error;
     }
