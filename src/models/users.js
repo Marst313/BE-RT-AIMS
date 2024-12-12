@@ -5,7 +5,7 @@ const Users = {
   createUser: async function (userData) {
     try {
       const id = generateUuid();
-      const { username, email, password, role } = userData;
+      const { username, email, password, role, photo } = userData;
 
       const result = await query(
         `INSERT INTO users(
@@ -13,14 +13,19 @@ const Users = {
           username, 
           email,
           password, 
-          role
+          role,
+          images_profile
         )
-          VALUES(?, ?, ? ,?, ?)
+          VALUES(?, ?, ? ,?, ?,?)
         `,
-        [id, username, email, password, role]
+        [id, username, email, password, role, photo]
       );
 
-      return result.insertId;
+      // Fetch the newly created user by ID
+      const [user] = await query(`SELECT id, username, email, role FROM users WHERE id = ?`, [id]);
+
+      // Return the full user object
+      return user;
     } catch (error) {
       throw error;
     }
@@ -28,7 +33,7 @@ const Users = {
 
   getUserByEmail: async function (email) {
     try {
-      const [result] = await query(`SELECT id, username, email, password, role, refresh_token FROM users WHERE email = ?`, [email]);
+      const [result] = await query(`SELECT id, username, email, password, role, refresh_token, images_profile FROM users WHERE email = ?`, [email]);
 
       return result;
     } catch (error) {
@@ -100,7 +105,7 @@ const Users = {
 
   updateUserProfile: async function (currentEmail, updateData) {
     try {
-      const result = await query(`UPDATE users SET username = ?, email = ? WHERE email = ?`, [updateData.username, updateData.email, currentEmail]);
+      const result = await query(`UPDATE users SET username = ?, email = ?,images_profile = ? WHERE email = ?`, [updateData.username, updateData.email, updateData.imagesProfile, currentEmail]);
       return result;
     } catch (error) {
       throw error;
@@ -138,8 +143,6 @@ const Users = {
       if (!token) {
         throw new Error('Token is required');
       }
-
-      const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
       const [user] = await query('SELECT id, role, email FROM users WHERE password_reset_token = ?', [token]);
 

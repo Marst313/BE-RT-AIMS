@@ -32,6 +32,7 @@ app.use('/api', limiter);
 
 // ! Middleware to parse JSON bodies
 app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true }));
 
 // ! SANITIZES USER INPUT DATA
 app.use(xss());

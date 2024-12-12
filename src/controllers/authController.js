@@ -78,6 +78,7 @@ const SignIn = catchAsync(async function (req, res, next) {
       email: user.email,
       username: user.username,
       role: user.role,
+      imageProfile: user.images_profile,
       accessToken,
       refreshToken,
     },
@@ -107,20 +108,18 @@ const SignInGoogle = catchAsync(async function (req, res, next) {
   }
 
   // ! CHECK IF USER EXISTS
-  const user = await Users.getUserByEmail(googleUser.email);
+  let user = await Users.getUserByEmail(googleUser.email);
 
+  // ! CREATE NEW USER IF NOT EXISTS
   if (!user) {
-    // ! CREATE NEW USER IF NOT EXISTS
     user = await Users.createUser({
-      email: googleUser.email,
       username: googleUser.name || googleUser.email.split('@')[0],
-      role: 'user',
+      email: googleUser.email,
       password: null,
+      role: 'user',
+      photo: googleUser.picture || 'https://rkybfgokfyudcfcqnidp.supabase.co/storage/v1/object/public/images/deffault.png',
     });
   }
-
-  // ! REMOVE PASSWORD
-  user.password = undefined;
 
   // ! GENERATE TOKENS
   const newAccessToken = generateAccessToken(user);
@@ -148,6 +147,7 @@ const SignInGoogle = catchAsync(async function (req, res, next) {
       email: user.email,
       username: user.username,
       role: user.role,
+      imageProfile: googleUser.picture,
       accessToken: newAccessToken,
       refreshToken,
     },
@@ -213,6 +213,7 @@ const RefreshToken = catchAsync(async function (req, res, next) {
       email: user.email,
       username: user.username,
       role: user.role,
+      imageProfile: user.images_profile,
       accessToken: newAccessToken,
       refreshToken,
     },
@@ -289,6 +290,32 @@ const ResetPassword = catchAsync(async (req, res, next) => {
   });
 });
 
+const updateMyPassword = catchAsync(async function (req, res, next) {
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+
+  // ! Validation if password same
+  if (newPassword !== confirmPassword) return next(new AppError('Password is not same', 403));
+
+  // ! Check if there is user
+  const user = await Users.getUserByEmail(req.user.email);
+  if (!user) return next(new AppError('Cant update password', 401));
+
+  // ! Check if password same
+  const isPasswordSame = await verifyPassword(oldPassword, user.password);
+  if (!isPasswordSame) return next(new AppError('Password is not valid', 403));
+
+  // ! Hash new password
+  const hashedPassword = await hashPassword(newPassword);
+
+  // ! Update password in db
+  await Users.updatePassword(hashedPassword, user.id);
+
+  res.status(200).json({
+    message: 'Password successfully updated',
+    status: 'success',
+  });
+});
+
 const protect = catchAsync(async function (req, res, next) {
   let token;
 
@@ -338,6 +365,7 @@ module.exports = {
   RefreshToken,
   ForgetPassword,
   ResetPassword,
+  updateMyPassword,
   protect,
   restrictTo,
 };

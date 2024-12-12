@@ -13,6 +13,7 @@ async function initializeTables() {
         \`id\` CHAR(36) NOT NULL,
         \`username\` VARCHAR(255) NOT NULL,
         \`email\` VARCHAR(255) NOT NULL UNIQUE,
+        \`images_profile\` VARCHAR(255),
         \`password\` VARCHAR(255),
         \`role\` CHAR(36) NOT NULL,
         \`refresh_token\` LONGTEXT,
