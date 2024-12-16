@@ -1,5 +1,5 @@
-const { query } = require("../db/db");
-const { generateUuid } = require("../utils/uuid");
+const { query } = require('../db/db');
+const { generateUuid } = require('../utils/uuid');
 
 const History = {
   createHistory: async (historydata) => {
@@ -13,13 +13,7 @@ const History = {
               file, 
               id_result
             ) VALUES (?, ?, ?, ?, ?)`,
-        [
-          id,
-          historydata.title,
-          historydata.date,
-          historydata.file,
-          historydata.id_result,
-        ]
+        [id, historydata.title, historydata.date, historydata.file, historydata.id_result]
       );
       return result.insertId;
     } catch (error) {
@@ -55,8 +49,8 @@ const History = {
 
       if (!result || !result.id_result) return 0;
 
-      await query("DELETE FROM result WHERE id = ?", [result.id_result]);
-      await query("DELETE FROM history WHERE id = ?", [id]);
+      await query('DELETE FROM result WHERE id = ?', [result.id_result]);
+      await query('DELETE FROM history WHERE id = ?', [id]);
 
       return 1;
     } catch (error) {
@@ -69,8 +63,7 @@ const History = {
       const result = await query(
         `SELECT history.id AS id_history,
                 history.title AS title,
-                history.date AS createdAt,
-                history.file AS file
+                history.date AS createdAt
          FROM history
          INNER JOIN result ON history.id_result = result.id
          WHERE history.id_users = ?`,
@@ -133,6 +126,34 @@ const History = {
       if (!result) return;
 
       return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getMonthlyHistory: async (userId) => {
+    try {
+      const result = await query(
+        `SELECT MONTH(history.date) AS month, 
+                COUNT(*) AS total 
+         FROM history 
+         WHERE history.id_users = ?
+         GROUP BY MONTH(history.date) 
+         ORDER BY MONTH(history.date) ASC`,
+        [userId]
+      );
+
+      const monthlyData = Array.from({ length: 12 }, (_, index) => ({
+        name: new Date(0, index).toLocaleString('en-US', { month: 'short' }),
+        total: 0,
+      }));
+
+      result.forEach((row) => {
+        const monthIndex = row.month - 1;
+        monthlyData[monthIndex].total = row.total;
+      });
+
+      return monthlyData;
     } catch (error) {
       throw error;
     }
